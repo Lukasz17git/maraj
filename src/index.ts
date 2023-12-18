@@ -1,0 +1,6 @@
+export { remove } from './utilities/remove'
+export { select } from './utilities/select'
+export { splitPathAtLastKey } from './utilities/splitPath'
+export { spread } from './utilities/spread'
+export { updateImmutably } from './utilities/updateImmutably'
+export type { DotPaths, DotPathsWithLength, DotPathUpdateObject, ValueInDotPath } from './types'

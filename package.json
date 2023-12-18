@@ -1,0 +1,43 @@
+{
+   "name": "maraj",
+   "version": "1.1.2",
+   "description": "A lightweight 500 bytes gzipped alternative for immutable updates while dealing with objects and arrays",
+   "keywords": [
+      "shallow",
+      "shallow copy",
+      "nested copy"
+   ],
+   "author": "Lukasz Maraj",
+   "license": "MIT",
+   "private": false,
+   "main": "dist/index.js",
+   "module": "dist/index.mjs",
+   "types": "dist/index.d.ts",
+   "files": [
+      "dist",
+      "README.md",
+      "LICENSE"
+   ],
+   "scripts": {
+      "dev": "vitest",
+      "test": "vitest run",
+      "build": "tsup src/index.ts --minify --format cjs,esm --dts",
+      "lint": "tsc",
+      "ci": "npm run lint && npm run test && npm run build",
+      "release": "npm run lint && npm run test && npm run build && changeset publish"
+   },
+   "repository": {
+      "type": "git",
+      "url": "git+https://github.com/Lukasz17git/maraj.git"
+   },
+   "bugs": {
+      "url": "https://github.com/Lukasz17git/maraj/issues"
+   },
+   "homepage": "https://github.com/Lukasz17git/maraj#readme",
+   "devDependencies": {
+      "@changesets/cli": "^2.27.1",
+      "tsup": "^8.0.1",
+      "typescript": "^4.9.5",
+      "vitest": "^0.28.4"
+   }
+}
