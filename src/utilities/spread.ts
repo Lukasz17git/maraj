@@ -8,5 +8,5 @@ export const spread = <T extends Array<any> | object>(
 ) => {
    if (currentValue?.constructor === Object && update?.constructor === Object) return { ...currentValue, ...update }
    if (Array.isArray(currentValue) && Array.isArray(update)) return [...currentValue, ...update]
-   return update
+   return currentValue
 }
