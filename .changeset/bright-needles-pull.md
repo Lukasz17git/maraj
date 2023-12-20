@@ -1,0 +1,5 @@
+---
+"maraj": patch
+---
+
+updated types

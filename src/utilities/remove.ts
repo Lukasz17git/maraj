@@ -1,12 +1,14 @@
 
-/**
- * Removes properties or indexes, order doesn't matter.
- */
-export const remove = <T extends object>(
+type Remove = <T extends object>(
    value: T,
    keys: T extends any[] ? (number | `${number}` | (number | `${number}`)[])
       : (keyof T | (keyof T)[])
-): T => {
+) => T
+
+/**
+ * Removes properties or indexes, order doesn't matter.
+ */
+export const remove: Remove = (value, keys): typeof value => {
 
    if (!Array.isArray(value) && value?.constructor !== Object) throw 'Wrong type provided in "remove" function'
 
