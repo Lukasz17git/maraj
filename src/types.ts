@@ -1,5 +1,3 @@
-
-
 /**
  * Paths implementation
  */
@@ -23,7 +21,7 @@ type RootFlatten<T, TIncludeLength extends boolean> = T extends ReadonlyArray<in
    : T extends PrimitivesAndNativeObjects ? never : ObjectPaths<T, TIncludeLength>
 
 export type DotPaths<T> = RootFlatten<T, false>
-export type DotPathsWithLength<T> = RootFlatten<T, true>
+export type DotPathsIncludingLength<T> = RootFlatten<T, true>
 
 
 /**
