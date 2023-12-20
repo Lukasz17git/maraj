@@ -1,18 +1,14 @@
 import { DotPathUpdateObject } from "../types";
 
-type DeepPartial<T> = {
-   [K in keyof T]?: T[K] extends object ? DeepPartial<T[K]> : T[K];
-};
-
-export const updateImmutably = <T extends object>(state: T, updates: DotPathUpdateObject<T>, nonStrict: boolean = false): T => {
+const _updateImmutably: UpdateImmutably & UpdateImmutablyNonStrictly = (state, updates, mode: Modes = 'strict-paths') => {
 
    /* check for JS */
-   if (state?.constructor !== Object && !Array.isArray(state)) throw `${state} is not an object/array so cant be updated immutably`
+   if (state?.constructor !== Object && !Array.isArray(state)) throw new Error(`${state} is not an object/array so cant be updated immutably`)
 
    if (!updates) return state
 
-   const stateCopy = Array.isArray(state) ? [...state] as T : { ...state }
-   const alreadyShallowCopiedPaths: DeepPartial<T> = {}
+   const stateCopy = Array.isArray(state) ? [...state] as typeof state : { ...state }
+   const alreadyShallowCopiedPaths: DeepPartial<typeof state> = {}
 
    for (const [pathSeparatedByDots, newValueToUpdate] of Object.entries(updates)) {
       if (!pathSeparatedByDots || pathSeparatedByDots === 'false' || pathSeparatedByDots === 'undefined' || pathSeparatedByDots === 'null') continue
@@ -23,7 +19,7 @@ export const updateImmutably = <T extends object>(state: T, updates: DotPathUpda
       // shallow copy recursively the path until i reach the object/array containing the "lastKeyWhereUpdateHappens"
       for (let currentKey of pathKeysToReachLastKey) {
          // @ts-ignore: checking if the currentParent[currentKey] is an object or array, skips null
-         if (!currentParent[currentKey] || typeof currentParent[currentKey] !== 'object' || (currentParent[currentKey].constructor !== Object && !Array.isArray(currentParent[currentKey]))) throw `Invalid path provided: "${currentKey}" is not an object/array in "${pathSeparatedByDots}"`
+         if (!currentParent[currentKey] || typeof currentParent[currentKey] !== 'object' || (currentParent[currentKey].constructor !== Object && !Array.isArray(currentParent[currentKey]))) throw new Error(`Invalid path provided: "${currentKey}" is not an object/array in "${pathSeparatedByDots}"`)
          // @ts-ignore: checking if it has been already shallowCopied
          if (!shallowCopiedPathsTracker[currentKey]) {
             // @ts-ignore: updating the current parent AND ALSO THE STATECOPY to be a shallow copy of the parent
@@ -39,15 +35,18 @@ export const updateImmutably = <T extends object>(state: T, updates: DotPathUpda
       // parent containing the currentKey where update happens, and its already shallow copied
       const parentOfLastKey = currentParent
       // prevent from adding new properties/indexes in strict mode
-      if (!nonStrict) {
+      if (mode !== 'implement-non-existent-paths') {
+         const skipNonExistentPaths = mode === 'skip-non-existent-paths'
          // parent may be either array or object, all the rest types cant reach this place
-         // @ts-ignore: stringIndex < length => false if bigger or if its a string nonNumber, meaning that index to add doesnt exist, so throw error on strict mode
+         // @ts-ignore: stringIndex < length => false if bigger or if its a string nonNumber, meaning that index to add doesnt exist, so skip or throw error depending of the mode
          if (Array.isArray(parentOfLastKey) && !(lastKeyWhereUpdateHappens < parentOfLastKey.length)) {
-            throw `Use spread to add indexes in ${pathKeysToReachLastKey.join('.')}, because index ${lastKeyWhereUpdateHappens} doesnt exist in ${lastKeyWhereUpdateHappens}`
+            if (skipNonExistentPaths) continue
+            throw new Error(`Use spread to add indexes in ${pathKeysToReachLastKey.join('.')}, because index ${lastKeyWhereUpdateHappens} doesnt exist in ${lastKeyWhereUpdateHappens}`)
          }
-         // if property doesnt exist, throw error on strict mode
+         // if property doesnt exist, skip or throw error depending of the mode
          if (!parentOfLastKey.hasOwnProperty(lastKeyWhereUpdateHappens)) {
-            throw `Property ${lastKeyWhereUpdateHappens} doesnt exist in the path ${pathKeysToReachLastKey.join('.')} because its current value is: ${parentOfLastKey}`
+            if (skipNonExistentPaths) continue
+            throw new Error(`Property ${lastKeyWhereUpdateHappens} doesnt exist in the path ${pathKeysToReachLastKey.join('.')} because its current value is: ${parentOfLastKey}`)
          }
       }
 
@@ -62,3 +61,40 @@ export const updateImmutably = <T extends object>(state: T, updates: DotPathUpda
    }
    return stateCopy
 }
+
+type DeepPartial<T> = {
+   [K in keyof T]?: T[K] extends object ? DeepPartial<T[K]> : T[K];
+};
+
+type StrictMode = 'strict-paths'
+type SemiStrictMode = 'skip-non-existent-paths'
+type NonStrictMode = 'implement-non-existent-paths'
+type Modes = StrictMode | SemiStrictMode | NonStrictMode
+
+type UpdateImmutably = {
+   <T extends object>(state: T, updates: DotPathUpdateObject<T>): T
+}
+
+/**
+ * Creates a new updated object/array applying the changes provided in the update object.
+ * It doesnt modify the original input.
+ * If any of the paths doesnt exists it returns
+ */
+export const updateImmutably: UpdateImmutably = _updateImmutably
+
+
+type PosibleExpandedProps<T> = {
+   [K in keyof T]?: T[K] extends object ? PosibleExpandedProps<T[K]> & Record<any, any> : T[K];
+}
+
+type UpdateImmutablyNonStrictly = {
+   <T extends object>(state: T, updates: DotPathUpdateObject<T>, mode: SemiStrictMode): T
+   <T extends object>(state: T, updates: DotPathUpdateObject<T>, mode: NonStrictMode): PosibleExpandedProps<T>
+}
+
+/**
+ * Creates a new updated object/array applying the changes provided in the update object.
+ * It doesnt modify the original input.
+ * If any of the paths doesnt exists it adds it if possible.
+ */
+export const updateImmutablyAllowingNewProps: UpdateImmutablyNonStrictly = _updateImmutably
