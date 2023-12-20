@@ -4,10 +4,12 @@ type DeepPartial<T> = {
    [K in keyof T]?: T[K] extends object ? DeepPartial<T[K]> : T[K];
 };
 
-export const updateImmutably = <T extends object | any[]>(state: T, updates: DotPathUpdateObject<T> = {}, strict: boolean = true) => {
+export const updateImmutably = <T extends object>(state: T, updates: DotPathUpdateObject<T>, nonStrict: boolean = false): T => {
 
    /* check for JS */
-   if (state?.constructor !== Object && !Array.isArray(state)) return state
+   if (state?.constructor !== Object && !Array.isArray(state)) throw `${state} is not an object/array so cant be updated immutably`
+
+   if (!updates) return state
 
    const stateCopy = Array.isArray(state) ? [...state] as T : { ...state }
    const alreadyShallowCopiedPaths: DeepPartial<T> = {}
@@ -20,8 +22,8 @@ export const updateImmutably = <T extends object | any[]>(state: T, updates: Dot
       let currentParent = stateCopy
       // shallow copy recursively the path until i reach the object/array containing the "lastKeyWhereUpdateHappens"
       for (let currentKey of pathKeysToReachLastKey) {
-         // @ts-ignore: checking if the currentParent[currentKey] is an object or array 
-         if (typeof currentParent[currentKey] !== 'object' || !currentParent[currentKey]) throw new Error(`Invalid path provided: "${currentKey}" is not an object/array in "${pathSeparatedByDots}"`)
+         // @ts-ignore: checking if the currentParent[currentKey] is an object or array, skips null
+         if (!currentParent[currentKey] || typeof currentParent[currentKey] !== 'object' || (currentParent[currentKey].constructor !== Object && !Array.isArray(currentParent[currentKey]))) throw `Invalid path provided: "${currentKey}" is not an object/array in "${pathSeparatedByDots}"`
          // @ts-ignore: checking if it has been already shallowCopied
          if (!shallowCopiedPathsTracker[currentKey]) {
             // @ts-ignore: updating the current parent AND ALSO THE STATECOPY to be a shallow copy of the parent
@@ -36,17 +38,20 @@ export const updateImmutably = <T extends object | any[]>(state: T, updates: Dot
       }
       // parent containing the currentKey where update happens, and its already shallow copied
       const parentOfLastKey = currentParent
-      if (strict) {
+      // prevent from adding new properties/indexes in strict mode
+      if (!nonStrict) {
          // parent may be either array or object, all the rest types cant reach this place
-         // @ts-ignore: stringIndex < length => false if bigger or if its a string nonNumber
+         // @ts-ignore: stringIndex < length => false if bigger or if its a string nonNumber, meaning that index to add doesnt exist, so throw error on strict mode
          if (Array.isArray(parentOfLastKey) && !(lastKeyWhereUpdateHappens < parentOfLastKey.length)) {
-            throw new Error(`Use spread to add indexes in ${pathKeysToReachLastKey.join('.')}, because index ${lastKeyWhereUpdateHappens} doesnt exist in ${lastKeyWhereUpdateHappens}`)
+            throw `Use spread to add indexes in ${pathKeysToReachLastKey.join('.')}, because index ${lastKeyWhereUpdateHappens} doesnt exist in ${lastKeyWhereUpdateHappens}`
          }
+         // if property doesnt exist, throw error on strict mode
          if (!parentOfLastKey.hasOwnProperty(lastKeyWhereUpdateHappens)) {
-            throw new Error(`Property ${lastKeyWhereUpdateHappens} doesnt exist in ${lastKeyWhereUpdateHappens}`)
+            throw `Property ${lastKeyWhereUpdateHappens} doesnt exist in the path ${pathKeysToReachLastKey.join('.')} because its current value is: ${parentOfLastKey}`
          }
       }
-      // @ts-ignore: setting the new value in the givven path
+
+      // @ts-ignore: setting the new value in the given path
       parentOfLastKey[lastKeyWhereUpdateHappens] = typeof newValueToUpdate === 'function' ? newValueToUpdate(parentOfLastKey[lastKeyWhereUpdateHappens]) : newValueToUpdate
       /* 
       need to delete where update happens in shallowCopiedPathsTracker because there may be a full object/array (lest call it "NewObjectValue") set as new value, 

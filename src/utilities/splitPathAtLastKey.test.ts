@@ -2,9 +2,6 @@
 import { it, describe, expect } from 'vitest'
 import { splitPathAtLastKey } from './splitPathAtLastKey'
 
-const pathExample1 = 'data.files.1.id'
-const pathExample2 = 'data.country.city'
-
 describe("splitPathAtLastKey test", () => {
    it('should throw if the provided object is not an array or object', () => {
       expect(() => splitPathAtLastKey(true)).toThrow()

@@ -15,7 +15,7 @@ Features:
 - Easy syntax for conditional updates.
 - Functional updates.
 
-Vitest: <https://www.npmjs.com/package/maraj-test>
+Set "strictNullChecks" and "noUncheckedIndexedAccess" to true in tsconfig.json for correct type inference in optional properties (so it can correctly differentiate between optional props and props with possible undefined value)
 
 ## Creating an Immutable Update
 

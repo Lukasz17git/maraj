@@ -2,7 +2,6 @@
 import { it, describe, expect } from 'vitest'
 import { select } from './select'
 
-const arrayExample = ['0', 1, { value: 2 }, '3']
 const objectExample = {
    name: 'test object',
    testingPurpose: true,
