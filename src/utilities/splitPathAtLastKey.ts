@@ -1,5 +1,8 @@
 
-type SplitDotPathAtLastKey = <T extends string>(dotPath: T) => [string, string]
+type PathWithoutLastKey = string
+type LastKey = string
+
+type SplitDotPathAtLastKey = <T extends string>(dotPath: T) => [PathWithoutLastKey, LastKey]
 
 /**
  * Splits string dotPath into ID and RemainingPath
