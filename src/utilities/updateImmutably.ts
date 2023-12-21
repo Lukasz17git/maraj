@@ -1,4 +1,4 @@
-import { DotPathUpdateObject } from "../types";
+import { UpdateDotPathObject } from "../types";
 
 const _updateImmutably: UpdateImmutably & UpdateImmutablyNonStrictly = (state, updates, mode: Modes = 'strict-paths') => {
 
@@ -72,7 +72,7 @@ type NonStrictMode = 'implement-non-existent-paths'
 type Modes = StrictMode | SemiStrictMode | NonStrictMode
 
 type UpdateImmutably = {
-   <T extends object>(state: T, updates: DotPathUpdateObject<T>): T
+   <T extends object>(state: T, updates: UpdateDotPathObject<T>): T
 }
 
 /**
@@ -88,8 +88,8 @@ type PosibleExpandedProps<T> = {
 }
 
 type UpdateImmutablyNonStrictly = {
-   <T extends object>(state: T, updates: DotPathUpdateObject<T>, mode: SemiStrictMode): T
-   <T extends object>(state: T, updates: DotPathUpdateObject<T>, mode: NonStrictMode): PosibleExpandedProps<T>
+   <T extends object>(state: T, updates: UpdateDotPathObject<T>, mode: SemiStrictMode): T
+   <T extends object>(state: T, updates: UpdateDotPathObject<T>, mode: NonStrictMode): PosibleExpandedProps<T>
 }
 
 /**

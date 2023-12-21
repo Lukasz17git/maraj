@@ -42,14 +42,21 @@ type NestedProperty<TObject, TPath extends string> =
    : TPath extends `${infer K}.${infer R}` ? K extends keyof TObject ? NestedProperty<Required<TObject>[K], R> : K extends `${number}` | Index ? TObject extends Array<infer U> ? NestedProperty<U, R> : never : never
    : never
 
-export type ValueInDotPath<TObject, TPath extends DotPaths<TObject> | ''> = NestedProperty<TObject, TPath>
+export type ValueInDotPath<
+   TObject extends object,
+   TPath extends DotPaths<TObject> | ''
+> = NestedProperty<TObject, TPath>
 
+export type UpdateDotPathValue<
+   TObject extends object,
+   TPath extends DotPaths<TObject>
+> = ValueInDotPath<TObject, TPath> | ((value: ValueInDotPath<TObject, TPath>) => ValueInDotPath<TObject, TPath>)
 
 /**
  * Update Object Type Implementation
  */
-export type DotPathUpdateObject<T> = Partial<{
-   [K in DotPaths<T>]: K extends PathIndexingArray<Index>
-   ? [`TS PATH ERROR: replace _INDEX_ with {NUMBER}`, ValueInDotPath<T, K>, ((value: ValueInDotPath<T, K>) => ValueInDotPath<T, K>)]
-   : ValueInDotPath<T, K> | ((value: ValueInDotPath<T, K>) => ValueInDotPath<T, K>)
+export type UpdateDotPathObject<TObject extends object> = Partial<{
+   [TKey in DotPaths<TObject>]: TKey extends PathIndexingArray<Index>
+   ? [`TS PATH ERROR: replace _INDEX_ with {NUMBER}`, UpdateDotPathValue<TObject, TKey>]
+   : UpdateDotPathValue<TObject, TKey>
 }>
