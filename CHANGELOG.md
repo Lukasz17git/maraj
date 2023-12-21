@@ -1,5 +1,15 @@
 # maraj
 
+## 2.1.0
+
+### Minor Changes
+
+- 32d6ce6: changed type declarations, updated exported functions
+
+### Patch Changes
+
+- 80fe7ee: updated readme
+
 ## 2.0.0
 
 ### Major Changes
