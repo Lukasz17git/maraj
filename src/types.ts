@@ -7,21 +7,20 @@ type PrimitivesAndNativeObjects = null | undefined | string | number | boolean |
 type IsTuple<T extends ReadonlyArray<any>> = number extends T['length'] ? false : true;
 
 export type Index = '_INDEX_'
-type RootArrayPathEnum = `${number}` | Index
-type ArrayPathEnum<TLength extends boolean> = TLength extends true ? RootArrayPathEnum | 'length' : RootArrayPathEnum
-type ArrayPaths<TInnerType, TLength extends boolean> = `${ArrayPathEnum<TLength>}` | `${ArrayPathEnum<false>}.${RootFlatten<TInnerType, TLength>}`
+type ArrayIndexPaths = `${number}` | Index
+type ArrayPaths<TInnerType> = `${ArrayIndexPaths}` | `${ArrayIndexPaths}.${Flatten<TInnerType>}`
 
-type FilteredTuple<T, TLength> = TLength extends string ? Omit<T, Exclude<keyof any[], 'length'>> : Omit<T, keyof any[]>
+type ObjectPaths<T> = {
+   [Key in keyof T & string]: `${Key}` | `${Key}.${Flatten<T[Key]>}`
+}[keyof T & string]
 
-type ObjectPaths<T, TLength extends boolean> = { [Key in keyof T & string]: `${Key}` | `${Key}.${RootFlatten<T[Key], TLength>}` }[keyof T & string]
+type TuplePaths<T> = ObjectPaths<Omit<T, keyof any[]>>
 
-type RootFlatten<T, TIncludeLength extends boolean> = T extends ReadonlyArray<infer U> ?
-   IsTuple<T> extends true ? ObjectPaths<FilteredTuple<T, TIncludeLength>, TIncludeLength> : ArrayPaths<U, TIncludeLength>
-   : T extends string ? TIncludeLength extends true ? 'length' : never
-   : T extends PrimitivesAndNativeObjects ? never : ObjectPaths<T, TIncludeLength>
+type Flatten<T> = T extends ReadonlyArray<infer U> ?
+   IsTuple<T> extends true ? TuplePaths<T> : ArrayPaths<U>
+   : T extends PrimitivesAndNativeObjects ? never : ObjectPaths<T>
 
-export type DotPaths<T> = RootFlatten<T, false>
-export type DotPathsIncludingLength<T> = RootFlatten<T, true>
+export type DotPaths<T extends object> = Flatten<T>
 
 
 /**
@@ -47,16 +46,30 @@ export type ValueInDotPath<
    TPath extends DotPaths<TObject> | ''
 > = NestedProperty<TObject, TPath>
 
-export type UpdateDotPathValue<
+export type DotPathUpdateValue<
    TObject extends object,
    TPath extends DotPaths<TObject>
-> = ValueInDotPath<TObject, TPath> | ((value: ValueInDotPath<TObject, TPath>) => ValueInDotPath<TObject, TPath>)
+> = TPath extends PathIndexingArray<Index>
+   ? [`PATH ERROR: replace _INDEX_ with a NUMBER`, ValueInDotPath<TObject, TPath>, ((fieldValue: ValueInDotPath<TObject, TPath>, fullObject: TObject) => ValueInDotPath<TObject, TPath>)]
+   : ValueInDotPath<TObject, TPath> | ((fieldValue: ValueInDotPath<TObject, TPath>, fullObject: TObject) => ValueInDotPath<TObject, TPath>)
 
 /**
  * Update Object Type Implementation
  */
-export type UpdateDotPathObject<TObject extends object> = Partial<{
-   [TKey in DotPaths<TObject>]: TKey extends PathIndexingArray<Index>
-   ? [`TS PATH ERROR: replace _INDEX_ with {NUMBER}`, UpdateDotPathValue<TObject, TKey>]
-   : UpdateDotPathValue<TObject, TKey>
-}>
+export type DotPathUpdateObject<TObject extends object> = {
+   [TKey in DotPaths<TObject>]?: DotPathUpdateValue<TObject, TKey>
+}
+
+/**
+ * Optional and Required keys
+ */
+
+type NonPartialKeys = string | number | boolean | symbol | bigint | null | object
+
+export type OptionalKeys<T> = {
+   [K in keyof T & string]: T[K] extends NonPartialKeys ? never : K
+}[keyof T & string]
+
+export type RequiredKeys<T> = {
+   [K in keyof T & string]: T[K] extends NonPartialKeys ? K : never
+}[keyof T & string]

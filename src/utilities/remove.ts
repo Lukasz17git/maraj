@@ -1,8 +1,9 @@
+import { OptionalKeys } from "../types"
 
 type Remove = <T extends object>(
    value: T,
    keys: T extends any[] ? (number | `${number}` | (number | `${number}`)[])
-      : (keyof T | (keyof T)[])
+      : (OptionalKeys<T> | (OptionalKeys<T>)[])
 ) => T
 
 /**

@@ -1,7 +1,6 @@
 // @ts-nocheck
 import { it, describe, expect } from 'vitest'
 import { updateImmutably } from './updateImmutably'
-import { spread } from './spread'
 
 const arrayExample = ['0', 1, { value: 2 }, '3']
 const objectExample = {
@@ -66,7 +65,7 @@ describe("updateImmutably test", () => {
       const copy4: typeof objectExample = JSON.parse(JSON.stringify(objectExample))
       copy4.data.arrayExample = [...copy4.data.arrayExample, { name: 'example 3' }]
 
-      expect(updateImmutably(objectExample, { "data.arrayExample": (v) => spread(v, [{ name: 'example 3' }]) })).toEqual(copy4)
+      expect(updateImmutably(objectExample, { "data.arrayExample": (v) => [...v, { name: 'example 3' }] })).toEqual(copy4)
       expect(updateImmutably(objectExample, { "data.nestedData": v => v.deep })).toSatisfy((newValue) => newValue.tuple === objectExample.tuple)
 
    })

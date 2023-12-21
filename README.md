@@ -1,47 +1,72 @@
 
 # Maraj
 
-A lightweight alternative for creating **immutable updates of objects and arrays** such as Immer or ImmutableJS.
+A fast lightweight utility for creating **immutable updates of objects and arrays**. Fully typed. Only 600 bytes gziped. Includes usefull utilities for manipulating updates (like remove, select).
 
-**4 times faster** and **over 10 times lighter**.
+```ts
+const originalValue = { name: 'one', lastname: 'two' modified: false, files: [{ filename: 'one' }, { filename: 'two' }] }
 
-Fully typed.
+const updatedValue = updateImmutably(orignalValue, {
+   'name': 'updated value',
+   'modified': (value, fullObject) => !value,
+   'files.0.filename': 'new one',
+})
 
-Only **400 bytes** gziped and additional **300 bytes** for 4 common utilities that you will most likelly need in every project.
+originalValue.files[1] === updatedValue.files[1] // true
+```
 
-Features:
+### Features
 
-- Can accept multiple updates while mantaining the order of execution.
-- Easy syntax for conditional updates.
+- Correct type inference.
+- Multiple updates at same time mantaining the order of execution.
 - Functional updates.
 
-Set "strictNullChecks" and "noUncheckedIndexedAccess" to true in tsconfig.json for correct type inference in optional properties (so it can correctly differentiate between optional props and props with possible undefined value)
+**<u>Typescript:</u>** in tsconfig.json set **"strictNullChecks"** and **"noUncheckedIndexedAccess"** to true for correct type inference in optional properties (so it can correctly differentiate between optional props and props with possible undefined value)
 
-## Creating an Immutable Update
+### Limitations
 
-The **updateImmutably** function has two arguments:
+- If "addNonExistentPropsAndIndexes" is enabled, numbers will always create an array if the array/object doesnt exist beforehand.
 
-1. The **Original object**.
-2. An **Update object** (key-value pairs representing the updates we want to make)
+```ts
+const updatedValue = updateImmutably({}, {
+   'files.1.name': 'new name',
+}, true)
+// updatedValue = { files: [undefined, { name: 'new name' }] }
+```
 
-The **Update Object** has the following syntax:
+- The type "UpdateDotObject" using computed properties ( [key] ) will always throw a ts error even if the typing is correct. [Playground simple example](https://www.typescriptlang.org/play?ts=5.3.2#code/LAKALgngDgpgBAGQJYGcxwLxwOQENtwA+cABgCQDeAdgK4C2ARjAE4C+JooksiqYASjADGAe2YATTHApwA2gGk4SKrzQBdAPwAuOItacQoqmjhDmMXGBiDREqQB4AKnBgAPK1XEpVYAHwAKAGsYCB1HAEpMX2lQODijE3MhHWQ0GzFJLApYuNyAejy4AD0wbxZmMR0UZSF4ADcAFgA6AGYmgFYldAB3JAAbPrgwAAsK7rhcFXKxCfQhYeFA5QBzUxE6KBorSWCIb0nJOtw+mhhvGmqqVasNvst4PqQrZmOyupgVJAAzIYWh6BWSm8tiSYByuTkuzUOl24P0IFy5jANGYKiSoFYQA)
 
-```js
-{
-    'my.path.separated.by.dots': 'The new value',
-    'another.path': 'new value',
-    'myArray.0.name': 'new name in object inside array at index 0',
-    [false && 'path.conditionalUpdate']: true
+```ts
+const updateFieldStore = <TPath extends DotPaths<Store>>(
+   path: TPath,
+   newValue: UpdateDotPathValue<Store, TPath>
+) => {
+   const update: UpdateDotPathObject<Store> = {
+      // ^throws ts error even if the typing is correct
+      [path]: newValue
+   } // fix: coherce it with " as UpdateDotPathObject<Store>"
+   return update
 }
 ```
 
-Multiple key-value pairs that mantains the order of execution.
+- Use the "set" utility if typescript doesn't distinguish properly: _an optional field_ vs a _field which can have "undefined" as type_. Usually happens on optional nested props inside arrays.
 
-- **Keys:** path name of the fiels, separated by dots.
-  - For arrays just use its index value
-  - Can accept conditional statements. (If the key = false or undefined or null it will skip that field update.)
+```ts
+const updatedValue = updateImmutably({}, {
+   'files.0.optionalProperty': 'new name',
+   'files.1.optionalProperty': undefined, //no ts error
+   'files.0.optionalProperty': set('new name'),
+   'files.1.optionalProperty': set(undefined), //throws ts error, undefined cant be a value.
+}, true)
+```
 
-- **Value:** new value, any type. If its a function it ll be called with the current value in that field.
+## Creating an Immutable Update
+
+Arguments:
+
+- Original Object
+- Update Object
+- If it should add non-existent properties/indexes
 
 ## Example
 
@@ -49,52 +74,24 @@ Multiple key-value pairs that mantains the order of execution.
 import updateImmutably, { spread } from "maraj";
 
 const data = {
-    person: { name: "Lukasz", works: ["soum", "fi"] },
-    works: [
+    profile: { name: "Lukasz" },
+    works: ["soum", "fi"],
+    history: [
         { title: "soum", size: 90, available: true, info: ["info1"] },
         { title: "fi", size: 30, available: false, info: ["infoA"] },
     ]
 }
 
 const newUpdatedObject = updateImmutably(data, {
-    "age": 28, //add new values
-    "person.name": "Lucas", //update values
-    "person.works.1": "gs", //nested array update
-    "works.1.available": (currentValue) => (!currentValue), //functional update
-    [false && "works.0.size"]: 120, //conditional field update
-    "person.works": (v) => spread(v, "portfolio") //common utilities
+    "profile.age": 28, //add new properties if "addNonExistentPropsAndIndexes" is enabled
+    "profile.name": "Lucas", //update values
+    "works.1": "gs", //nested array update
+    "history.1.available": (currentValue, _) => (!currentValue), //functional update
+    "works": (v) => [...v, 'portfolio'] //add new value to array
 })
-
-/** Does not make a deep copy and "falsy" fields are ignored */
-newUpdatedObject.works[0] === data.works[0] //true
-
-/** New Updated Object 
-{
-    person: { name: "Lucas", works: ["soum", "gs", "portfolio"], age: 28 },
-    works: [
-        { title: "soum", size: 90, available: true, info: ["info1"] },
-        { title: "fi", size: 30, available: true, info: ["infoA"] },
-    ]
-}
-*/
 ```
 
 ## Other Utilities
-
-### spread
-
-**For Objects and Arrays: Spreads** its argument into the key provided in the updateImmutably.
-**For the rest: Sets** its argument into the key provided in the updateImmutably.
-
-```js
-import {spread} from 'maraj'
-
-const newUpdatedObject = updateImmutably(data,{
-    'person': (value) => spread(value, {info1: 'new Info'}), //same as (newValue) => (value) => ({...value, ...newValue})
-    'works': (value) => spread(value, {title: 'new project', size: 20}) //same as (newValueToAdd) => (value) => ([...value, ...newValueToAdd])
-    'person.works': (value) => spread(value, "portfolio") //same as (newValue) => (value) => (newValue)
-})
-```
 
 ### remove
 
@@ -104,40 +101,49 @@ Removes the **key of an object** or the **index of an array** in the key provide
 import {remove} from 'maraj'
 
 const newUpdatedObject = updateImmutably(person,{
-    'person': (value) => remove(value, 'works'), // returns new value (in this case "person") without the provided key ("works")
-    'works': (value) => remove(value, 1) // returns new array (in this case "works") without the provided index (1)
+    'profile': (value) => remove(value, 'name'), // returns new value without the "name" prop
+    'works': (value) => remove(value, 1), // returns new array without the provided index (1)
+    'works': (value) => remove(value, [1, "0"]), // returns new array without the provided index (0,1)
 })
 ```
 
 ### select
 
-**Creates a store selector** from provided string path.
-
-Usefull in cases like getting data from Redux, Zustand, and so on. stores.
+Selects the value of an object/array from a string-dot-path. Usefull in state management libraries.
 
 ```js
 import {select} from 'maraj'
 
 const stringPath = 'works.1.size'
 
-const storeSelector = (state) => select(state, stringPath) // will behave as (store) => store[works][1][size]
+const work1SizeSelector = (state) => select(state, stringPath) // will behave as (store) => store[works][1][size]
 ```
 
 ### splitPathAtLastKey
 
-Usefull when you want to spread multiple values into objects dynamically
+Usefull when you want to retrieve the last key (for example an id).
 
 Splits string path (example:'projects.1.data.size' ) into two:
 
-- id: the last key in the path (in this case 'size')
 - remainingPath: the remaining path (in this case 'projects.1.data')
+- lastKey: the last key in the path (in this case 'size')
 
 ```js
-import {splitPathAtLastKey} from 'maraj'
+import { splitPathAtLastKey } from 'maraj'
 
 const stringPath = 'works.1.size'
 
 const [remainingPath, last] = splitPathAtLastKey(stringPath)
 // last = 'size'
 // remainingPath = 'works.1'
+```
+
+### set
+
+In some unusual cases (usually when updating an optional object prop inside an array) typescript infers incorrectly the optional key vs a key with undefined value. To fix this typing issue, use the "set" function so it correctly infers the type in the field.
+
+```ts
+const newUpdatedObject = updateImmutably(data, {
+    "history.1.title": set("new title"), //functional update
+})
 ```
