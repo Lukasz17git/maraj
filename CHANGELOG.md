@@ -1,5 +1,11 @@
 # maraj
 
+## 2.3.0
+
+### Minor Changes
+
+- 6e928ad: types
+
 ## 2.2.0
 
 ### Minor Changes
