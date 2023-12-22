@@ -20,7 +20,7 @@ type Flatten<T> = T extends ReadonlyArray<infer U> ?
    IsTuple<T> extends true ? TuplePaths<T> : ArrayPaths<U>
    : T extends PrimitivesAndNativeObjects ? never : ObjectPaths<T>
 
-export type DotPaths<T extends object> = Flatten<T>
+export type DotPaths<T> = Flatten<T>
 
 
 /**
@@ -34,7 +34,7 @@ export type PathIndexingArray<T extends string | number> = `${T}` | `${T}.${stri
  * Nested Property Type implementation
  */
 
-type NestedProperty<TObject, TPath extends string> =
+type NestedProperty<TObject, TPath> =
    TPath extends '' ? TObject
    : TPath extends keyof TObject ? TObject[TPath]
    : TPath extends (`${number}` | Index) ? TObject extends Array<infer U> ? TPath extends `${number}.${infer K}` ? K extends keyof U ? NestedProperty<U, K> : never : U : never
@@ -42,12 +42,12 @@ type NestedProperty<TObject, TPath extends string> =
    : never
 
 export type ValueInDotPath<
-   TObject extends object,
+   TObject,
    TPath extends DotPaths<TObject> | ''
 > = NestedProperty<TObject, TPath>
 
 export type DotPathUpdateValue<
-   TObject extends object,
+   TObject,
    TPath extends DotPaths<TObject>
 > = TPath extends PathIndexingArray<Index>
    ? [`PATH ERROR: replace _INDEX_ with a NUMBER`, ValueInDotPath<TObject, TPath>, ((fieldValue: ValueInDotPath<TObject, TPath>, fullObject: TObject) => ValueInDotPath<TObject, TPath>)]
@@ -56,7 +56,7 @@ export type DotPathUpdateValue<
 /**
  * Update Object Type Implementation
  */
-export type DotPathUpdateObject<TObject extends object> = {
+export type DotPathUpdateObject<TObject> = {
    [TKey in DotPaths<TObject>]?: DotPathUpdateValue<TObject, TKey>
 }
 
