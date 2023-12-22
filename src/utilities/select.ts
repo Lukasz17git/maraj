@@ -1,6 +1,6 @@
 import { DotPaths, Index, PathIndexingArray, ValueInDotPath } from "../types"
 
-type Select = <T extends object, TPath extends (DotPaths<T> | '') >(
+type Select = <T, TPath extends (DotPaths<T> | '') >(
    state: T,
    path: TPath
 ) => TPath extends PathIndexingArray<Index> ? never
