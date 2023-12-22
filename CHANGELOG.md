@@ -1,5 +1,15 @@
 # maraj
 
+## 2.2.0
+
+### Minor Changes
+
+- 84630c7: updated types for DX improvement
+
+### Patch Changes
+
+- d897212: improved type of SplitPath
+
 ## 2.1.0
 
 ### Minor Changes
