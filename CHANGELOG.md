@@ -1,5 +1,15 @@
 # maraj
 
+## 2.4.0
+
+### Minor Changes
+
+- 00b2577: new types, better defined functions and types
+
+### Patch Changes
+
+- 6ab2e7f: updated DotPath Type to allow picking paths which have types provided by the users
+
 ## 2.3.0
 
 ### Minor Changes
