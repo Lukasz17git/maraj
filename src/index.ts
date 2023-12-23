@@ -6,10 +6,10 @@ export { updateImmutably } from './utilities/updateImmutably'
 export type {
    DotPaths,
    ValueInDotPath,
+   ReturnedValueInDotPath,
    DotPathUpdateObject,
    DotPathUpdateValue,
-   OptionalKeys,
-   RequiredKeys,
+   RetrieveOptionalKeys,
+   RetrieveRequiredKeys,
    PrimitivesAndNativeObjects,
-   IsPathIndexingAnArray
 } from './types'
