@@ -1,5 +1,0 @@
----
-"maraj": minor
----
-
-types
