@@ -28,16 +28,17 @@ originalValue.files[1] === updatedValue.files[1] // true
 
 ### Limitations
 
-- If "addNonExistentPropsAndIndexes" is enabled, numbers will always create an array if the array/object doesnt exist beforehand.
+- If "addNonExistentPropsAndIndexes" is enabled (3rd parameter in the updateImmutably function), **numbers** will **always** create an **array** if the array/object doesnt exist beforehand.
 
 ```ts
 const updatedValue = updateImmutably({}, {
    'files.1.name': 'new name',
 }, true)
 // updatedValue = { files: [<empty>, { name: 'new name' }] }
+// the "files" prop is an array.
 ```
 
-- The type "UpdateDotObject" using computed properties ( [key] ) will always throw a ts error even if the typing is correct. [Playground simple explanation](https://www.typescriptlang.org/play?ts=5.3.2#code/LAKALgngDgpgBAGQJYGcxwLxwOQENtwA+cABgCQDeAdgK4C2ARjAE4C+JooksiqYASjADGAe2YATTHApwA2gGk4SKrzQBdAPwAuOItacQoqmjhDmMXGBiDREqQB4AKnBgAPK1XEpVYAHwAKAGsYCB1HAEpMX2lQODijE3MhHWQ0GzFJLApYuNyAejy4AD0wbxZmMR0UZSF4ADcAFgA6AGYmgFYldAB3JAAbPrgwAAsK7rhcFXKxCfQhYeFA5QBzUxE6KBorSWCIb0nJOtw+mhhvGmqqVasNvst4PqQrZmOyupgVJAAzIYWh6BWSm8tiSYByuTkuzUOl24P0IFy5jANGYKiSoFYQA)
+- The type "UpdateDotPathObject" (the type used as second parameter in the updateImmutably function) if used to create new update objects using computed properties { [key]: value } will always throw a ts error even if the typing is correct. [Playground simple explanation](https://www.typescriptlang.org/play?ts=5.3.2#code/LAKALgngDgpgBAGQJYGcxwLxwOQENtwA+cABgCQDeAdgK4C2ARjAE4C+JooksiqYASjADGAe2YATTHApwA2gGk4SKrzQBdAPwAuOItacQoqmjhDmMXGBiDREqQB4AKnBgAPK1XEpVYAHwAKAGsYCB1HAEpMX2lQODijE3MhHWQ0GzFJLApYuNyAejy4AD0wbxZmMR0UZSF4ADcAFgA6AGYmgFYldAB3JAAbPrgwAAsK7rhcFXKxCfQhYeFA5QBzUxE6KBorSWCIb0nJOtw+mhhvGmqqVasNvst4PqQrZmOyupgVJAAzIYWh6BWSm8tiSYByuTkuzUOl24P0IFy5jANGYKiSoFYQA)
 
 ```ts
 const updateFieldStore = <TPath extends DotPaths<Store>>(
