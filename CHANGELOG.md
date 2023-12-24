@@ -1,5 +1,11 @@
 # maraj
 
+## 2.4.1
+
+### Patch Changes
+
+- ad32784: updated types and types description
+
 ## 2.4.0
 
 ### Minor Changes
