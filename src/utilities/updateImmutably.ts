@@ -7,10 +7,13 @@ type DeepPartial<T> = {
 type UpdateImmutably = <T extends object>(state: T, updates: DotPathUpdateObject<T>, addNonExistentPropsAndIndexes?: true) => T
 
 /**
- * Creates a new updated object/array applying the changes provided in the update object.
- * It doesnt modify the original input.
- * If any of the paths doesnt exists it returns
+ * Creates a new object applying immutable updates using dot-path syntax.
+ * @param state Original State Object.
+ * @param updates Dot Path Update Object.
+ * @param addNonExistentPropsAndIndexes If it should or not create non-existent fields.
+ * @returns New Updated Object.
  */
+
 export const updateImmutably: UpdateImmutably = (state, updates, addNonExistentPropsAndIndexes?) => {
 
    /* check for JS */
