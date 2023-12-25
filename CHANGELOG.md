@@ -1,5 +1,16 @@
 # maraj
 
+## 2.5.0
+
+### Minor Changes
+
+- 095ba44: added isObjectLiteral
+- 1a5d88e: added new functions, improved readability
+
+### Patch Changes
+
+- 1777152: updated readme
+
 ## 2.4.1
 
 ### Patch Changes

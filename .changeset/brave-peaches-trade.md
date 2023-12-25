@@ -1,5 +1,0 @@
----
-"maraj": minor
----
-
-added isObjectLiteral
