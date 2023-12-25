@@ -3,13 +3,14 @@ export { select } from './utilities/select'
 export { splitPathAtLastKey } from './utilities/splitPathAtLastKey'
 export { set } from './utilities/set'
 export { updateImmutably } from './utilities/updateImmutably'
+export { isObjectLiteral } from './utilities/isObjectLiteral'
 export type {
    DotPaths,
    ValueInDotPath,
    ReturnedValueInDotPath,
    DotPathUpdateObject,
    DotPathUpdateValue,
-   RetrieveOptionalKeys,
-   RetrieveRequiredKeys,
+   OptionalKeys,
+   RequiredKeys,
    PrimitivesAndNativeObjects,
 } from './types'

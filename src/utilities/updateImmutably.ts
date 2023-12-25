@@ -1,4 +1,5 @@
 import { DotPathUpdateObject } from "../types";
+import { isObjectLiteral } from "./isObjectLiteral";
 
 type DeepPartial<T> = {
    [K in keyof T]?: T[K] extends object ? DeepPartial<T[K]> : T[K];
@@ -17,7 +18,7 @@ type UpdateImmutably = <T extends object>(state: T, updates: DotPathUpdateObject
 export const updateImmutably: UpdateImmutably = (state, updates, addNonExistentPropsAndIndexes?) => {
 
    /* check for JS */
-   if (state?.constructor !== Object && !Array.isArray(state)) throw new Error(`${state} is not an object/array`)
+   if (!isObjectLiteral(state) && !Array.isArray(state)) throw new Error(`${state} is not an object/array`)
 
    /* returns same state if no updates */
    if (!updates) return state
@@ -37,7 +38,7 @@ export const updateImmutably: UpdateImmutably = (state, updates, addNonExistentP
 
          // @ts-ignore: checking using js if its an object-literal or array
          const valueInCurrentKey = currentParent[currentKey]
-         const isObjectOrArray = typeof valueInCurrentKey === 'object' && (valueInCurrentKey.constructor === Object || Array.isArray(valueInCurrentKey))
+         const isObjectOrArray = isObjectLiteral(valueInCurrentKey) || Array.isArray(valueInCurrentKey)
          const shouldCreateNonExistentNewProp = addNonExistentPropsAndIndexes && valueInCurrentKey === undefined
 
          if (!isObjectOrArray && !shouldCreateNonExistentNewProp) throw new Error(`Invalid path provided: "${currentKey}" is not an object/array in "${pathSeparatedByDots}"`)

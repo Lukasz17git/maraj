@@ -113,26 +113,27 @@ export type DotPathUpdateObject<TObject> = {
  * --------------------------------------------
  */
 
-/** All types instead of undefined. */
-type NonPartialKeys = null | object
-
 /** Returns only the optional keys of an object. */
-export type RetrieveOptionalKeys<T> = {
-   [K in keyof T & string]: T[K] extends NonPartialKeys ? never : K
-}[keyof T & string]
+export type OptionalKeys<T> = { [K in keyof T]-?: {} extends Pick<T, K> ? K : never }[keyof T];
 
 /** Returns only the required keys of an object. */
-export type RetrieveRequiredKeys<T> = {
-   [K in keyof T & string]: T[K] extends NonPartialKeys ? K : never
-}[keyof T & string]
-
-
+export type RequiredKeys<T> = { [K in keyof T]-?: {} extends Pick<T, K> ? never : K }[keyof T];
 
 
 /**
  * --------------------------------------------
- *  TO KNOW IF A PATH IS INDEXING ARRAY OR NOT
+ *  OLD TYPES
  * --------------------------------------------
  */
 
+/** All types instead of undefined. */
+// type NonPartialKeys = object | null | string | number | boolean | symbol | bigint | Date | FileList | File
+
+/** Returns only the optional keys of an object. */
+// export type OptionalKeys2<T> = { [K in keyof T]: T[K] extends NonPartialKeys ? never : K }[keyof T]
+
+/** Returns only the required keys of an object. */
+// export type RetrieveRequiredKeys<T> = { [K in keyof T]: T[K] extends NonPartialKeys ? K : never }[keyof T]
+
+/** To know if a path is indexing an array. */
 // export type IsPathIndexingAnArray<T extends LiteralIndex | number> = `${T}` | `${T}.${string}` | `${string}.${T}` | `${string}.${T}.${string}`
