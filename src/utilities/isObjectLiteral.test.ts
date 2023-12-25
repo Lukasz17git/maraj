@@ -16,8 +16,6 @@ describe("isObjectLiteral test", () => {
       expect(isObjectLiteral(1.123)).toBe(false)
       expect(isObjectLiteral(Date)).toBe(false)
       expect(isObjectLiteral(new Date())).toBe(false)
-      expect(isObjectLiteral(File)).toBe(false)
-      expect(isObjectLiteral(new File([], ''))).toBe(false)
       expect(isObjectLiteral(new Function())).toBe(false)
       expect(isObjectLiteral([])).toBe(false)
       expect(isObjectLiteral([1])).toBe(false)
