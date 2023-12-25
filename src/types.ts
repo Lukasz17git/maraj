@@ -1,3 +1,4 @@
+import { LiteralIndex } from "./utilities/updateImmutably";
 
 /**
  * --------------------------------------------
@@ -8,11 +9,8 @@
 /** Primitives and browser native objects. */
 export type PrimitivesAndNativeObjects = null | undefined | string | number | boolean | symbol | bigint | Date | FileList | File
 
-/** Index literal type to improve DX at managing updates. */
-export type LiteralIndex = '${number}'
-
 /** Array indexes type. */
-type ArrayIndexes = `${number}` | LiteralIndex
+type ArrayIndexes = number | LiteralIndex
 
 /** To check if a ReadonlyArray is a tuple or not. */
 type IsTuple<T extends ReadonlyArray<any>> = number extends T['length'] ? false : true;

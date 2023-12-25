@@ -1,9 +1,9 @@
-import { RetrieveOptionalKeys } from "../types"
+import { OptionalKeys } from "../types"
 
 type Remove = <T extends object>(
    value: T,
    keys: T extends any[] ? (number | `${number}` | (number | `${number}`)[])
-      : (RetrieveOptionalKeys<T> | (RetrieveOptionalKeys<T>)[])
+      : OptionalKeys<T> | (OptionalKeys<T>)[]
 ) => T
 
 /**
@@ -22,15 +22,12 @@ export const remove: Remove = (value, keys): typeof value => {
    if (Array.isArray(value)) {
       const uniqueSymbol = Symbol()
       const copy = [...value]
-      // @ts-ignore: doesnt matter if the provided key doesnt exist
       keysAsArray.forEach((key) => { copy[key] = uniqueSymbol })
-      const update = copy.filter((v) => v !== uniqueSymbol)
-      // @ts-ignore: should return T type
+      const update = copy.filter((v) => v !== uniqueSymbol) as typeof value
       return update
    }
 
    const update = { ...value }
-   // @ts-ignore: doesnt matter if the provided key doesnt exist
    keysAsArray.forEach(key => delete update[key])
    return update
 }

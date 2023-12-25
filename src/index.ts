@@ -2,8 +2,9 @@ export { remove } from './utilities/remove'
 export { select } from './utilities/select'
 export { splitPathAtLastKey } from './utilities/splitPathAtLastKey'
 export { set } from './utilities/set'
-export { updateImmutably } from './utilities/updateImmutably'
+export { updateImmutably, modifyImmutably } from './utilities/updateImmutably'
 export { isObjectLiteral } from './utilities/isObjectLiteral'
+export { isStringIndex, parseStringIndex } from './utilities/stringIndex'
 export type {
    DotPaths,
    ValueInDotPath,
