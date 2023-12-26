@@ -1,6 +1,6 @@
 {
    "name": "maraj",
-   "version": "2.5.0",
+   "version": "2.5.1",
    "description": "A lightweight 600 bytes gzipped alternative for immutable updates while dealing with objects and arrays",
    "keywords": [
       "shallow",
