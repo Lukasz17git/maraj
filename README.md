@@ -1,7 +1,7 @@
 
 # Maraj
 
-A fast lightweight utility for creating **immutable updates**. Full typescript support. Only 600 bytes gziped. Includes usefull utilities for manipulating updates (like remove, select).
+A fast lightweight utility for creating **immutable updates**. Fully typed. Only 600 bytes gziped. Includes usefull utilities for manipulating updates (like remove, select).
 
 ### Features
 
@@ -12,7 +12,7 @@ A fast lightweight utility for creating **immutable updates**. Full typescript s
 - Functional updates.
 - Includes usefull utilities like "remove", "select".
 
-**<u>For Typescript:</u>** in tsconfig.json set **"strictNullChecks"** and **"noUncheckedIndexedAccess"** to true for correct type inference of optional properties (so it can correctly differentiate between optional props and props with possible undefined value)
+**<u>_For Typescript:_</u>** in tsconfig.json set **"strictNullChecks"** and **"noUncheckedIndexedAccess"** to **true** to be able to infer correctly the type of optional properties and properties with posible undefined value. ({key?: ''} !== {key: '' | undefined})
 
 ```ts
 const originalValue = { name: 'one', lastname: 'two' modified: false, files: [{ filename: 'one' }] }
