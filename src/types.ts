@@ -1,4 +1,4 @@
-import { LiteralIndex } from "./utilities/updateImmutably";
+import { LiteralIndex } from "./utilities/immutableImplementation";
 
 /**
  * --------------------------------------------
@@ -7,7 +7,7 @@ import { LiteralIndex } from "./utilities/updateImmutably";
  */
 
 /** Primitives and browser native objects. */
-export type PrimitivesAndNativeObjects = null | undefined | string | number | boolean | symbol | bigint | Date | FileList | File
+type PrimitivesAndNativeObjects = null | undefined | string | number | boolean | symbol | bigint | Date | FileList | File
 
 /** Array indexes type. */
 type ArrayIndexes = number | LiteralIndex
@@ -24,8 +24,8 @@ type IsTuple<T extends ReadonlyArray<any>> = number extends T['length'] ? false 
 /** Dot-paths of an array. */
 type ArrayPaths<TInnerType, TAllowedTypes> = TInnerType extends TAllowedTypes
    ? TInnerType extends PrimitivesAndNativeObjects
-   ? `${ArrayIndexes}`
-   : `${ArrayIndexes}` | `${ArrayIndexes}.${DotPaths<TInnerType, TAllowedTypes>}`
+   ? number | `${ArrayIndexes}`
+   : number | `${ArrayIndexes}` | `${ArrayIndexes}.${DotPaths<TInnerType, TAllowedTypes>}`
    : `${ArrayIndexes}.${DotPaths<TInnerType, TAllowedTypes>}`
 
 /** Dot-paths of an object. */
@@ -65,7 +65,7 @@ type NestedType<TObject, TPath> =
    never : never
 
 /** Value of a nested property of a given dot-path. */
-export type ValueInDotPath<TObject, TPath extends DotPaths<TObject> | ''> = NestedType<TObject, TPath>
+export type ExactValueInDotPath<TObject, TPath extends DotPaths<TObject> | ''> = NestedType<TObject, TPath>
 
 
 /**
@@ -97,41 +97,59 @@ export type ReturnedValueInDotPath<TObject, TPath extends DotPaths<TObject> | ''
  */
 
 /** Value of a dot-path update object, can be the value or a function. */
-export type DotPathUpdateValue<TObject, TPath extends DotPaths<TObject>> = ValueInDotPath<TObject, TPath> | ((fieldValue: ValueInDotPath<TObject, TPath>, fullObject: TObject) => ValueInDotPath<TObject, TPath>)
+export type DotPathUpdateValue<TObject, TPath extends DotPaths<TObject>> = ExactValueInDotPath<TObject, TPath> | ((fieldValue: ExactValueInDotPath<TObject, TPath>) => ExactValueInDotPath<TObject, TPath>)
 
 /** Dot-path update object, used to give updates to the updateImmutably function. */
 export type DotPathUpdateObject<TObject> = {
-   [TPath in DotPaths<TObject>]?: ValueInDotPath<TObject, TPath> | ((fieldValue: ValueInDotPath<TObject, TPath>, fullObject: TObject) => ValueInDotPath<TObject, TPath>)
+   [TPath in DotPaths<TObject>]?: ExactValueInDotPath<TObject, TPath> | ((fieldValue: ExactValueInDotPath<TObject, TPath>) => ExactValueInDotPath<TObject, TPath>)
 }
 
 
 /**
  * --------------------------------------------
- *  REQUIRED OR OPTIONAL KEYS
+ *  EXTRACT TYPE FROM DOT-PATH UPDATE OBJECT
  * --------------------------------------------
  */
 
-/** Returns only the optional keys of an object. */
-export type OptionalKeys<T> = { [K in keyof T]-?: {} extends Pick<T, K> ? K : never }[keyof T];
+/** Merging two objects */
+// type Merge<A, B> = { [K in keyof (A | B)]: K extends keyof B ? B[K] : A[K] };
 
-/** Returns only the required keys of an object. */
-export type RequiredKeys<T> = { [K in keyof T]-?: {} extends Pick<T, K> ? never : K }[keyof T];
+/** Keys which arent dot-path keys */
+type NonDotPathKeys<T> = { [Key in keyof T]: Key extends `${infer K}.${string}` ? K : Key }[keyof T]
+/** Keys which are an index */
+type KeysRepresentingAnIndex<T> = { [Key in keyof T]: Key extends `${number}.${string}` ? never : Key }[keyof T]
+/** Keys which start with an index */
+type KeyPathsStartingWithAnIndex<T> = { [Key in keyof T]: Key extends `${number}.${string}` ? Key : never }[keyof T]
+/** Keys which are paths and its first key-path is removed */
+type NestedPathKeys<T, K extends string | number> = { [Key in keyof T]: Key extends `${K}.${infer U}` ? U : never }[keyof T]
+/** Extract value if its a function */
+type Value<T> = T extends (...args: any) => any ? ReturnType<T> : T
+/** To check if an empty object is provided */
+type EmptyObject = Record<string | number | symbol, never>
 
+/** Used to extract the type from a dot-path update object. */
+export type ExtractTypeFromDotPathUpdateObject<T extends Record<string, any>> =
+   T extends EmptyObject ? {} :
+   keyof T extends LiteralIndex | number | `${number}` | `${number}.${infer U}`
+   ? Value<T[KeyPathsStartingWithAnIndex<T>]> extends never
+   ? Array<Value<T[KeysRepresentingAnIndex<T>]>>
+   : Array<Value<T[KeysRepresentingAnIndex<T>]> | { [Key2 in U]: Value<T[KeyPathsStartingWithAnIndex<T>]> }>
+   : {
+      [Key1 in NonDotPathKeys<T> & string]: Key1 extends keyof T
+      ? Value<T[Key1]> extends Array<infer U>
+      ? ExtractTypeFromDotPathUpdateObject<{ [Key2 in NestedPathKeys<T, Key1>]: Value<T[`${Key1}.${Key2}`]> }> extends Array<infer W>
+      ? Array<U | W>
+      : Array<U> & ExtractTypeFromDotPathUpdateObject<{ [Key2 in NestedPathKeys<T, Key1>]: Value<T[`${Key1}.${Key2}`]> }>
+      : Value<T[Key1]> //& ExtractTypeFromDotPathUpdateObject<{ [Key2 in NestedPathKeys<T, Key1>]: Value<T[`${Key1}.${Key2}`]> }>
+      : ExtractTypeFromDotPathUpdateObject<{ [Key2 in NestedPathKeys<T, Key1>]: Value<T[`${Key1}.${Key2}`]> }>
+   } & unknown
 
-/**
- * --------------------------------------------
- *  OLD TYPES
- * --------------------------------------------
- */
-
-/** All types instead of undefined. */
-// type NonPartialKeys = object | null | string | number | boolean | symbol | bigint | Date | FileList | File
-
-/** Returns only the optional keys of an object. */
-// export type OptionalKeys2<T> = { [K in keyof T]: T[K] extends NonPartialKeys ? never : K }[keyof T]
-
-/** Returns only the required keys of an object. */
-// export type RetrieveRequiredKeys<T> = { [K in keyof T]: T[K] extends NonPartialKeys ? K : never }[keyof T]
-
-/** To know if a path is indexing an array. */
-// export type IsPathIndexingAnArray<T extends LiteralIndex | number> = `${T}` | `${T}.${string}` | `${string}.${T}` | `${string}.${T}.${string}`
+/** New expanded value after aplying updates including new properties */
+export type ExtendedUpdate<
+   TObject extends Record<string | number | symbol, any>,
+   TDotPathUpdateObject extends Record<string | number | symbol, any>
+> = TObject extends Array<infer U>
+   ? ExtractTypeFromDotPathUpdateObject<TDotPathUpdateObject> extends Array<infer W>
+   ? Array<U | W>
+   : TObject & ExtractTypeFromDotPathUpdateObject<TDotPathUpdateObject>
+   : ExtractTypeFromDotPathUpdateObject<TObject & TDotPathUpdateObject>
