@@ -8,13 +8,11 @@ export type LiteralIndex = typeof LITERAL_INDEX
 
 type Tracker = { [K in string]?: Tracker }
 
-type ObjectOrArray = Record<string | number | symbol, any>
 type OptionValues = 'error' | 'skip' | 'add'
 type Options = { onNewProps?: OptionValues, onNewIndexes?: OptionValues }
-type ImmutableImplementation = <T extends ObjectOrArray, U extends UpdateObject<T>>(state: T, updateObject: U, options?: Options) => T | ExtendedUpdate<T, U>
+type ImmutableImplementation = <T extends Record<PropertyKey, any>, U extends UpdateObject<T>>(state: T, updateObject: U, options?: Options) => T | ExtendedUpdate<T, U>
 
 const toJson = (v: any) => JSON.stringify(v)
-const joinKeys = (keys: string[], index?: number) => keys.slice(0, index).join('.')
 const isArray = (v: any) => Array.isArray(v)
 
 const immutableImplementation: ImmutableImplementation = (state, updates, options = {}) => {
@@ -27,51 +25,53 @@ const immutableImplementation: ImmutableImplementation = (state, updates, option
 
    /* typeof state | ExtendedUpdate<typeof state, typeof updates> Assertion because it may add new props later in the execution */
    const stateCopy = (Array.isArray(state) ? [...state] : { ...state }) as typeof state | ExtendedUpdate<typeof state, typeof updates>
+
+   /* tracker of already shallow copied paths */
    const alreadyShallowCopiedPaths: Tracker = {}
 
    for (const [pathSeparatedByDots, newValueToUpdate] of Object.entries(updates)) {
-      // TODO: Not sure if needed.
-      /* continue if path === '' */
-      if (!pathSeparatedByDots) continue
 
-      const pathKeysToReachLastKey = pathSeparatedByDots.split(".")
-      let lastKeyWhereUpdateHappens = pathKeysToReachLastKey.pop()!
+      /* continue if path === '', cant be !path because 0 is a valid option */
+      if (pathSeparatedByDots === '') continue
 
-      /* setting up the tracker and the current parent */
+      /* setting up the keys, tracker and the current parent (all mutable)*/
+      let pathKeys = pathSeparatedByDots.split(".")
       let shallowCopiedPathsTracker = alreadyShallowCopiedPaths
       let currentParent: Record<string, any> = stateCopy
 
-      /* shallow copy recursively the path until i reach the object/array containing the "lastKeyWhereUpdateHappens" */
-      for (let keyIndexInsidePath = 0; keyIndexInsidePath < pathKeysToReachLastKey.length; keyIndexInsidePath++) {
+      /* shallow copy recursively the path until i reach the object/array containing the last key */
+      while (pathKeys.length > 1) {
 
-         /* checking if a full dot-path key exist in my object, it will support only full matching keys */
-         const posibleDotPathKey = pathKeysToReachLastKey.slice(keyIndexInsidePath).join('.') + `.${lastKeyWhereUpdateHappens}`
-         if (currentParent.hasOwnProperty(posibleDotPathKey)) {
-            lastKeyWhereUpdateHappens = posibleDotPathKey
+         /* checking if a full dot-path key exist in the object, supporting only full matching keys */
+         const posibleFullDotPathKey = pathKeys.join('.')
+         if (Object.hasOwn(currentParent, posibleFullDotPathKey)) {
+            pathKeys = [posibleFullDotPathKey]
             break
          }
 
-         const currentKey = pathKeysToReachLastKey[keyIndexInsidePath]! //must be a string
-
+         /* current key and its value to check */
+         const currentKey = pathKeys[0]!
          const valueInCurrentKey = currentParent[currentKey]
 
          /* checking the type in "valueInCurrentKey" */
          const isCurrentValueAnObject = isObjectLiteral(valueInCurrentKey)
          const isCurrentValueAnArray = isArray(valueInCurrentKey)
-         /* It has to be undefined instead of "hasOwnProperty" because i may want to add more nested props
-          and there could be a case where the prop exist and is undefined. */
+         /* It has to be undefined instead of "hasOwnProperty" because i may want to add more nested props in this value
+          and there could be a case where the prop exist and is set up as undefined.
+          For example partial properties set to undefined which can contain an object/array. */
+         //TODO: maybe i need to override also primitive properties?, because a prop can have object/primitive as different values?
          const isCurrentValueUndefined = valueInCurrentKey === undefined
 
-         if (!isCurrentValueAnObject && !isCurrentValueAnArray && !isCurrentValueUndefined) throw new Error(`Property "${currentKey}" in "${joinKeys(pathKeysToReachLastKey, keyIndexInsidePath)}" is a primitive`)
+         if (!isCurrentValueAnObject && !isCurrentValueAnArray && !isCurrentValueUndefined) throw new Error(`Property "${currentKey}" in "${pathSeparatedByDots}" is a primitive`)
 
          /* checking if the current path has been already shallowCopied */
          if (!shallowCopiedPathsTracker[currentKey]) {
             if (isCurrentValueUndefined) {
-               //TODO: Maybe add so you can't add new properties to an array?
+               //TODO: Maybe add so you can't add new string properties to an array?
                const isCurrentKeyAnIndex = isArray(currentParent) && isStringIndex(currentKey)
-               const isNextKeyAnIndex = isStringIndex(pathKeysToReachLastKey[keyIndexInsidePath + 1] ?? lastKeyWhereUpdateHappens)
+               const isNextKeyAnIndex = isStringIndex(pathKeys[1]!)
                const optionBehaviour = isCurrentKeyAnIndex ? options.onNewIndexes : options.onNewProps
-               if (optionBehaviour === 'error') throw new Error(`${currentKey} doesn't exist in "${joinKeys(pathKeysToReachLastKey, keyIndexInsidePath)}"`)
+               if (optionBehaviour === 'error') throw new Error(`${currentKey} doesn't exist in "${pathSeparatedByDots}"`)
                if (optionBehaviour === 'skip') continue
                currentParent[currentKey] = isNextKeyAnIndex ? [] : {}
             } else {
@@ -84,19 +84,22 @@ const immutableImplementation: ImmutableImplementation = (state, updates, option
 
          /* setting up the currentParent for the next iteration of currentKey */
          currentParent = currentParent[currentKey]
-
          /* setting up the tracker for the next iteration of currentKey */
          shallowCopiedPathsTracker = shallowCopiedPathsTracker[currentKey]!
+         /* removing current key from pathKeys for the next iteration */
+         pathKeys.shift()
       }
 
+      /* lastKeyWhereUpdateHappens must always exist */
+      const lastKeyWhereUpdateHappens = pathKeys[0]!
       /* parent (has to always be an object or array), already shallow copied, containing the lastKey where update happens. */
       const parentOfLastKey = currentParent
 
       /* behaviour on new properties/indexes */
-      if (!parentOfLastKey.hasOwnProperty(lastKeyWhereUpdateHappens)) {
+      if (!Object.hasOwn(parentOfLastKey, lastKeyWhereUpdateHappens)) {
          const isCurrentKeyAnIndex = isArray(parentOfLastKey) && isStringIndex(lastKeyWhereUpdateHappens)
          const optionBehaviour = isCurrentKeyAnIndex ? options.onNewIndexes : options.onNewProps
-         if (optionBehaviour === 'error') throw new Error(`Property/Index "${lastKeyWhereUpdateHappens}" doesnt exist in the path "${joinKeys([...pathKeysToReachLastKey, lastKeyWhereUpdateHappens])}". Its value is: "${toJson(parentOfLastKey)}"`)
+         if (optionBehaviour === 'error') throw new Error(`Property/Index "${lastKeyWhereUpdateHappens}" doesnt exist in the path "${pathSeparatedByDots}". Its value is: "${toJson(parentOfLastKey)}"`)
          if (optionBehaviour === 'skip') continue
       }
 
@@ -108,11 +111,12 @@ const immutableImplementation: ImmutableImplementation = (state, updates, option
        so i need after it shallow copy it again to prevent updating the original provided "NewObjectValue" */
       delete shallowCopiedPathsTracker[lastKeyWhereUpdateHappens]
    }
+
    return stateCopy
 }
 
 
-type ImmutableUpdate = <TObject extends ObjectOrArray>(
+type ImmutableUpdate = <TObject extends Record<PropertyKey, any>>(
    state: TObject,
    dotPathUpdateObject: UpdateObject<TObject>,
    options?: Options
@@ -131,7 +135,7 @@ type ImmutableUpdate = <TObject extends ObjectOrArray>(
 export const update: ImmutableUpdate = (state, dotPathUpdateObject, options) => immutableImplementation(state, dotPathUpdateObject, options)
 
 
-type ExtendableImmutableUpdate = <TObject extends ObjectOrArray, TUpdateObject extends UpdateObject<TObject>
+type ExtendableImmutableUpdate = <TObject extends Record<PropertyKey, any>, TUpdateObject extends UpdateObject<TObject>
 >(
    state: TObject,
    dotPathUpdateObject: TUpdateObject,
