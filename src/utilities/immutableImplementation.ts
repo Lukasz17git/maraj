@@ -1,4 +1,4 @@
-import { DotPathUpdateObject, ExtendedUpdate } from "../types";
+import { UpdateObject, ExtendedUpdate } from "../types";
 import { isObjectLiteral } from "./isObjectLiteral";
 import { isStringIndex } from "./stringIndex";
 
@@ -11,7 +11,7 @@ type Tracker = { [K in string]?: Tracker }
 type ObjectOrArray = Record<string | number | symbol, any>
 type OptionValues = 'error' | 'skip' | 'add'
 type Options = { onNewProps?: OptionValues, onNewIndexes?: OptionValues }
-type ImmutableImplementation = <T extends ObjectOrArray, U extends DotPathUpdateObject<T>>(state: T, updateObject: U, options?: Options) => T | ExtendedUpdate<T, U>
+type ImmutableImplementation = <T extends ObjectOrArray, U extends UpdateObject<T>>(state: T, updateObject: U, options?: Options) => T | ExtendedUpdate<T, U>
 
 const toJson = (v: any) => JSON.stringify(v)
 const joinKeys = (keys: string[], index?: number) => keys.slice(0, index).join('.')
@@ -20,13 +20,13 @@ const isArray = (v: any) => Array.isArray(v)
 const immutableImplementation: ImmutableImplementation = (state, updates, options = {}) => {
 
    /* checks state type */
-   if (!isObjectLiteral(state) && !Array.isArray(state)) throw new Error(`"${toJson(state)}" is not an literalObject/array`)
+   if (!isObjectLiteral(state) && !isArray(state)) throw new Error(`"${toJson(state)}" is not an literalObject/array`)
 
    /* checks updates type */
    if (!isObjectLiteral(updates)) throw new Error(`wrong "updateObject" type provided`)
 
-   //@ts-ignor
-   const stateCopy = Array.isArray(state) ? [...state] : { ...state }
+   /* typeof state | ExtendedUpdate<typeof state, typeof updates> Assertion because it may add new props later in the execution */
+   const stateCopy = (Array.isArray(state) ? [...state] : { ...state }) as typeof state | ExtendedUpdate<typeof state, typeof updates>
    const alreadyShallowCopiedPaths: Tracker = {}
 
    for (const [pathSeparatedByDots, newValueToUpdate] of Object.entries(updates)) {
@@ -37,9 +37,7 @@ const immutableImplementation: ImmutableImplementation = (state, updates, option
       const pathKeysToReachLastKey = pathSeparatedByDots.split(".")
       let lastKeyWhereUpdateHappens = pathKeysToReachLastKey.pop()!
 
-      // /* throw if devs forgot to change LITERAL_INDEX into an actual number */
-      // if (pathKeysToReachLastKey.includes(LITERAL_INDEX)) throw new Error(`"${LITERAL_INDEX}" inside "${pathSeparatedByDots}"`)
-
+      /* setting up the tracker and the current parent */
       let shallowCopiedPathsTracker = alreadyShallowCopiedPaths
       let currentParent: Record<string, any> = stateCopy
 
@@ -96,14 +94,13 @@ const immutableImplementation: ImmutableImplementation = (state, updates, option
 
       /* behaviour on new properties/indexes */
       if (!parentOfLastKey.hasOwnProperty(lastKeyWhereUpdateHappens)) {
-         const isCurrentKeyAnIndex = Array.isArray(parentOfLastKey) && isStringIndex(lastKeyWhereUpdateHappens)
+         const isCurrentKeyAnIndex = isArray(parentOfLastKey) && isStringIndex(lastKeyWhereUpdateHappens)
          const optionBehaviour = isCurrentKeyAnIndex ? options.onNewIndexes : options.onNewProps
          if (optionBehaviour === 'error') throw new Error(`Property/Index "${lastKeyWhereUpdateHappens}" doesnt exist in the path "${joinKeys([...pathKeysToReachLastKey, lastKeyWhereUpdateHappens])}". Its value is: "${toJson(parentOfLastKey)}"`)
          if (optionBehaviour === 'skip') continue
       }
 
-      /* setting the new value in the given path */
-      //@ts-ignore: if prop doesnt exist it will add it only if "addNonExistentPropsAndIndexes" is enabled
+      /* setting the new value in the given path, if prop doesnt exist it will add it */
       parentOfLastKey[lastKeyWhereUpdateHappens] = typeof newValueToUpdate === 'function' ? newValueToUpdate(parentOfLastKey[lastKeyWhereUpdateHappens]) : newValueToUpdate
 
       /* Need to delete where update happens in shallowCopiedPathsTracker because there may be a full object/array (lest
@@ -111,13 +108,13 @@ const immutableImplementation: ImmutableImplementation = (state, updates, option
        so i need after it shallow copy it again to prevent updating the original provided "NewObjectValue" */
       delete shallowCopiedPathsTracker[lastKeyWhereUpdateHappens]
    }
-   return stateCopy as typeof state | ExtendedUpdate<typeof state, typeof updates>
+   return stateCopy
 }
 
 
 type ImmutableUpdate = <TObject extends ObjectOrArray>(
    state: TObject,
-   dotPathUpdateObject: DotPathUpdateObject<TObject>,
+   dotPathUpdateObject: UpdateObject<TObject>,
    options?: Options
 ) => TObject
 
@@ -134,7 +131,7 @@ type ImmutableUpdate = <TObject extends ObjectOrArray>(
 export const update: ImmutableUpdate = (state, dotPathUpdateObject, options) => immutableImplementation(state, dotPathUpdateObject, options)
 
 
-type ExtendableImmutableUpdate = <TObject extends ObjectOrArray, TUpdateObject extends DotPathUpdateObject<TObject>
+type ExtendableImmutableUpdate = <TObject extends ObjectOrArray, TUpdateObject extends UpdateObject<TObject>
 >(
    state: TObject,
    dotPathUpdateObject: TUpdateObject,

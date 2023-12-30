@@ -53,19 +53,16 @@ export type DotPaths<T, TAllowedTypes = any> = T extends ReadonlyArray<infer U> 
  */
 
 /** Nested type implementation. */
-export type NestedValue<TObject, TPath> =
+export type ValueInPath<TObject, TPath> =
    TPath extends '' ? TObject :
    TPath extends keyof TObject ? TObject[TPath] :
    TPath extends LiteralIndex ? never :
    TPath extends `${number}` ? TObject extends ReadonlyArray<infer U> ? U : never :
    TPath extends `${infer K}.${infer R}` ?
-   K extends keyof TObject ? NestedValue<TObject[K], R> :
+   K extends keyof TObject ? ValueInPath<TObject[K], R> :
    K extends LiteralIndex ? never :
-   K extends `${number}` ? TObject extends ReadonlyArray<infer U> ? NestedValue<U, R> : never :
+   K extends `${number}` ? TObject extends ReadonlyArray<infer U> ? ValueInPath<U, R> : never :
    never : never
-
-// /** Value of a nested property of a given dot-path. */
-// export type ExactValueInDotPath<TObject, TPath extends DotPaths<TObject> | ''> = NestedType<TObject, TPath>
 
 
 /**
@@ -75,19 +72,15 @@ export type NestedValue<TObject, TPath> =
  */
 
 /** Returned nested type implementation. */
-export type ReturnedNestedValue<TObject, TPath> =
+export type ReturnedValueInPath<TObject, TPath> =
    TPath extends '' ? TObject :
    TPath extends keyof TObject ? TPath extends number ? TObject extends ReadonlyArray<infer U> ? (U | undefined) : TObject[TPath] : TObject[TPath] :
    TPath extends `${number}` ? TObject extends ReadonlyArray<infer U> ? (U | undefined) : never :
    TPath extends LiteralIndex ? never :
    TPath extends `${infer K}.${infer R}` ?
-   K extends keyof TObject ? ReturnedNestedValue<TObject[K], R> :
+   K extends keyof TObject ? ReturnedValueInPath<TObject[K], R> :
    K extends LiteralIndex ? never :
-   K extends `${number}` ? TObject extends ReadonlyArray<infer U> ? (ReturnedNestedValue<U, R> | undefined) : never : never : never
-
-
-// /** Value of a RETURNED nested property of a given dot-path (so when accessing arrays can be undefined). */
-// export type ReturnedValueInDotPath<TObject, TPath extends DotPaths<TObject> | ''> = ReturnedNestedValue<TObject, TPath>
+   K extends `${number}` ? TObject extends ReadonlyArray<infer U> ? (ReturnedValueInPath<U, R> | undefined) : never : never : never
 
 
 /**
@@ -97,11 +90,11 @@ export type ReturnedNestedValue<TObject, TPath> =
  */
 
 /** Value of a dot-path update object, can be the value or a function. */
-export type UpdateValue<TObject, TPath> = NestedValue<TObject, TPath> | ((fieldValue: NestedValue<TObject, TPath>) => NestedValue<TObject, TPath>)
+export type UpdateValue<TObject, TPath> = ValueInPath<TObject, TPath> | ((fieldValue: ValueInPath<TObject, TPath>) => ValueInPath<TObject, TPath>)
 
 /** Dot-path update object, used to give updates to the updateImmutably function. */
 export type UpdateObject<TObject> = {
-   [TPath in DotPaths<TObject>]?: NestedValue<TObject, TPath> | ((fieldValue: NestedValue<TObject, TPath>) => NestedValue<TObject, TPath>)
+   [TPath in DotPaths<TObject>]?: ValueInPath<TObject, TPath> | ((fieldValue: ValueInPath<TObject, TPath>) => ValueInPath<TObject, TPath>)
 }
 
 

@@ -8,8 +8,8 @@ export { isStringIndex, parseStringIndex } from './utilities/stringIndex'
 export type { LiteralIndex } from './utilities/immutableImplementation'
 export type {
    DotPaths,
-   ExactValueInDotPath,
-   ReturnedValueInDotPath,
-   DotPathUpdateObject,
-   DotPathUpdateValue,
+   ValueInPath,
+   ReturnedValueInPath,
+   UpdateObject,
+   UpdateValue,
 } from './types'
