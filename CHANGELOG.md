@@ -1,5 +1,15 @@
 # maraj
 
+## 2.7.0
+
+### Minor Changes
+
+- 8a0953e: improved types and functions
+
+### Patch Changes
+
+- b8d9359: updated select and immutableImplementation
+
 ## 2.6.0
 
 ### Minor Changes
