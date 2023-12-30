@@ -152,3 +152,7 @@ type ExtendableImmutableUpdate = <TObject extends Record<PropertyKey, any>, TUpd
 //@ts-ignore
 export const extendableUpdate: ExtendableImmutableUpdate = (state, dotPathUpdateObject) => immutableImplementation(state, dotPathUpdateObject)
 
+/*
+TODO: Maybe change it so it can accept any kind of value, and if its primitive the returned value
+has to be the value provided, and maybe it can only accept { '': ...  } update object.
+*/
