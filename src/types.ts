@@ -54,8 +54,8 @@ export type DotPaths<T, TAllowedTypes = any> = T extends ReadonlyArray<infer U> 
 
 /** Nested type implementation. */
 export type ValueInPath<TObject, TPath> =
-   TPath extends '' ? TObject :
    TPath extends keyof TObject ? TObject[TPath] :
+   TPath extends '' ? TObject :
    TPath extends LiteralIndex ? never :
    TPath extends `${number}` ? TObject extends ReadonlyArray<infer U> ? U : never :
    TPath extends `${infer K}.${infer R}` ?
