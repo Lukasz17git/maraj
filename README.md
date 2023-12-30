@@ -12,7 +12,7 @@ A fast lightweight utility for creating **immutable updates**. Fully typed. Only
 - Multiple and concurrent updates.
 - Nested functional updates.
 
-<u>**For Typescript:**</u> in tsconfig.json set **"strictNullChecks"** and **"noUncheckedIndexedAccess"** to **true** to be able to infer correctly the type of optional properties and properties with posible undefined value. ({key?: ''} !== {key: '' | undefined})
+<u>**For Typescript:**</u> in tsconfig.json set **"strictNullChecks"** and **"noUncheckedIndexedAccess"** to **true** to be able to infer correctly the type of *optional properties* and *properties with posible undefined value*. ( { key?: ... } is not equal to { key: ... | undefined } )
 
 ```ts
 const originalValue = { name: 'one', lastname: 'two' modified: false, files: [{ filename: 'one' }] }
