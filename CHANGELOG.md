@@ -1,5 +1,11 @@
 # maraj
 
+## 2.6.0
+
+### Minor Changes
+
+- 421cfa7: updated main update function
+
 ## 2.5.1
 
 ### Patch Changes
