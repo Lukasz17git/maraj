@@ -19,14 +19,11 @@ const isArray = (v: any) => Array.isArray(v)
 
 const immutableImplementation: ImmutableImplementation = (state, updates, options = {}) => {
 
-   /* default options */
-   options = { onNewProps: 'add', onNewIndexes: 'error', ...options }
-
    /* checks state type */
    if (!isObjectLiteral(state) && !Array.isArray(state)) throw new Error(`"${toJson(state)}" is not an literalObject/array`)
 
    /* checks updates type */
-   if (!isObjectLiteral(updates)) throw new Error(`wrong "updates" type provided`)
+   if (!isObjectLiteral(updates)) throw new Error(`wrong "updateObject" type provided`)
 
    //@ts-ignor
    const stateCopy = Array.isArray(state) ? [...state] : { ...state }
@@ -37,7 +34,7 @@ const immutableImplementation: ImmutableImplementation = (state, updates, option
       /* continue if path === '' */
       if (!pathSeparatedByDots) continue
 
-      let pathKeysToReachLastKey = pathSeparatedByDots.split(".")
+      const pathKeysToReachLastKey = pathSeparatedByDots.split(".")
       let lastKeyWhereUpdateHappens = pathKeysToReachLastKey.pop()!
 
       // /* throw if devs forgot to change LITERAL_INDEX into an actual number */
@@ -48,6 +45,13 @@ const immutableImplementation: ImmutableImplementation = (state, updates, option
 
       /* shallow copy recursively the path until i reach the object/array containing the "lastKeyWhereUpdateHappens" */
       for (let keyIndexInsidePath = 0; keyIndexInsidePath < pathKeysToReachLastKey.length; keyIndexInsidePath++) {
+
+         /* checking if a full dot-path key exist in my object, it will support only full matching keys */
+         const posibleDotPathKey = pathKeysToReachLastKey.slice(keyIndexInsidePath).join('.') + `.${lastKeyWhereUpdateHappens}`
+         if (currentParent.hasOwnProperty(posibleDotPathKey)) {
+            lastKeyWhereUpdateHappens = posibleDotPathKey
+            break
+         }
 
          const currentKey = pathKeysToReachLastKey[keyIndexInsidePath]! //must be a string
 
@@ -146,3 +150,4 @@ type ExtendableImmutableUpdate = <TObject extends ObjectOrArray, TUpdateObject e
  */
 //@ts-ignore
 export const extendableUpdate: ExtendableImmutableUpdate = (state, dotPathUpdateObject) => immutableImplementation(state, dotPathUpdateObject)
+

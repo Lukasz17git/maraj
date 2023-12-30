@@ -15,12 +15,12 @@ const objectExample = {
 }
 
 describe("select test", () => {
-   it('should return same value if the path is not a string', () => {
-      expect(select(objectExample, true)).toBe(objectExample)
-      expect(select(objectExample, 1)).toBe(objectExample)
-      expect(select(objectExample, new Date())).toBe(objectExample)
-      expect(select(objectExample, null)).toBe(objectExample)
-      expect(select(objectExample)).toBe(objectExample)
+   it('should throw an error if the path is not a string', () => {
+      expect(() => select(objectExample, true)).toThrow()
+      expect(() => select(objectExample, 1)).toThrow()
+      expect(() => select(objectExample, new Date())).toThrow()
+      expect(() => select(objectExample, null)).toThrow()
+      expect(() => select(objectExample)).toThrow()
    })
 
    it('should return same value if the path is an empty string', () => {
@@ -39,5 +39,5 @@ describe("select test", () => {
       expect(select(objectExample, 'data.arrayExample.0.name')).toBe(objectExample.data.arrayExample[0].name)
       expect(select(objectExample, 'tuple.0')).toBe(objectExample.tuple[0])
    })
-   
+
 })

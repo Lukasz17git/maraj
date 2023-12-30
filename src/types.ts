@@ -75,11 +75,11 @@ export type ExactValueInDotPath<TObject, TPath extends DotPaths<TObject> | ''> =
  */
 
 /** Returned nested type implementation. */
-type ReturnedNestedValue<TObject, TPath> =
+type ReturnedNestedValue<TObject, TPath extends PropertyKey> =
    TPath extends '' ? TObject :
-   TPath extends keyof TObject ? TObject[TPath] :
-   TPath extends LiteralIndex ? never :
+   TPath extends keyof TObject ? TPath extends number ? TObject extends ReadonlyArray<infer U> ? (U | undefined) : TObject[TPath] : TObject[TPath] :
    TPath extends `${number}` ? TObject extends ReadonlyArray<infer U> ? (U | undefined) : never :
+   TPath extends LiteralIndex ? never :
    TPath extends `${infer K}.${infer R}` ?
    K extends keyof TObject ? ReturnedNestedValue<TObject[K], R> :
    K extends LiteralIndex ? never :
