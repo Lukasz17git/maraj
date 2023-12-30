@@ -1,5 +1,11 @@
 # maraj
 
+## 2.7.1
+
+### Patch Changes
+
+- 1ec507d: improved UpdateObject type to be more generic
+
 ## 2.7.0
 
 ### Minor Changes
