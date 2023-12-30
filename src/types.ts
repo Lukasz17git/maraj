@@ -30,12 +30,12 @@ type ArrayPaths<TInnerType, TAllowedTypes> = TInnerType extends TAllowedTypes
 
 /** Dot-paths of an object. */
 type ObjectPaths<T, TAllowedTypes> = {
-   [Key in keyof T & string]: T[Key] extends TAllowedTypes
+   [Key in keyof T & (string | number)]: T[Key] extends TAllowedTypes
    ? T[Key] extends PrimitivesAndNativeObjects
    ? `${Key}`
    : `${Key}` | `${Key}.${DotPaths<T[Key], TAllowedTypes>}`
    : `${Key}.${DotPaths<T[Key], TAllowedTypes>}`
-}[keyof T & string]
+}[keyof T & (string | number)]
 
 /** Dot-paths of a tuple. */
 type TuplePaths<T, TAllowedTypes> = ObjectPaths<Omit<T, keyof any[]>, TAllowedTypes>
@@ -53,19 +53,19 @@ export type DotPaths<T, TAllowedTypes = any> = T extends ReadonlyArray<infer U> 
  */
 
 /** Nested type implementation. */
-type NestedType<TObject, TPath> =
+export type NestedValue<TObject, TPath> =
    TPath extends '' ? TObject :
    TPath extends keyof TObject ? TObject[TPath] :
    TPath extends LiteralIndex ? never :
    TPath extends `${number}` ? TObject extends ReadonlyArray<infer U> ? U : never :
    TPath extends `${infer K}.${infer R}` ?
-   K extends keyof TObject ? NestedType<TObject[K], R> :
+   K extends keyof TObject ? NestedValue<TObject[K], R> :
    K extends LiteralIndex ? never :
-   K extends `${number}` ? TObject extends ReadonlyArray<infer U> ? NestedType<U, R> : never :
+   K extends `${number}` ? TObject extends ReadonlyArray<infer U> ? NestedValue<U, R> : never :
    never : never
 
-/** Value of a nested property of a given dot-path. */
-export type ExactValueInDotPath<TObject, TPath extends DotPaths<TObject> | ''> = NestedType<TObject, TPath>
+// /** Value of a nested property of a given dot-path. */
+// export type ExactValueInDotPath<TObject, TPath extends DotPaths<TObject> | ''> = NestedType<TObject, TPath>
 
 
 /**
@@ -75,7 +75,7 @@ export type ExactValueInDotPath<TObject, TPath extends DotPaths<TObject> | ''> =
  */
 
 /** Returned nested type implementation. */
-type ReturnedNestedValue<TObject, TPath extends PropertyKey> =
+export type ReturnedNestedValue<TObject, TPath> =
    TPath extends '' ? TObject :
    TPath extends keyof TObject ? TPath extends number ? TObject extends ReadonlyArray<infer U> ? (U | undefined) : TObject[TPath] : TObject[TPath] :
    TPath extends `${number}` ? TObject extends ReadonlyArray<infer U> ? (U | undefined) : never :
@@ -86,8 +86,8 @@ type ReturnedNestedValue<TObject, TPath extends PropertyKey> =
    K extends `${number}` ? TObject extends ReadonlyArray<infer U> ? (ReturnedNestedValue<U, R> | undefined) : never : never : never
 
 
-/** Value of a RETURNED nested property of a given dot-path (so when accessing arrays can be undefined). */
-export type ReturnedValueInDotPath<TObject, TPath extends DotPaths<TObject> | ''> = ReturnedNestedValue<TObject, TPath>
+// /** Value of a RETURNED nested property of a given dot-path (so when accessing arrays can be undefined). */
+// export type ReturnedValueInDotPath<TObject, TPath extends DotPaths<TObject> | ''> = ReturnedNestedValue<TObject, TPath>
 
 
 /**
@@ -97,11 +97,11 @@ export type ReturnedValueInDotPath<TObject, TPath extends DotPaths<TObject> | ''
  */
 
 /** Value of a dot-path update object, can be the value or a function. */
-export type DotPathUpdateValue<TObject, TPath extends DotPaths<TObject>> = ExactValueInDotPath<TObject, TPath> | ((fieldValue: ExactValueInDotPath<TObject, TPath>) => ExactValueInDotPath<TObject, TPath>)
+export type UpdateValue<TObject, TPath> = NestedValue<TObject, TPath> | ((fieldValue: NestedValue<TObject, TPath>) => NestedValue<TObject, TPath>)
 
 /** Dot-path update object, used to give updates to the updateImmutably function. */
-export type DotPathUpdateObject<TObject> = {
-   [TPath in DotPaths<TObject>]?: ExactValueInDotPath<TObject, TPath> | ((fieldValue: ExactValueInDotPath<TObject, TPath>) => ExactValueInDotPath<TObject, TPath>)
+export type UpdateObject<TObject> = {
+   [TPath in DotPaths<TObject>]?: NestedValue<TObject, TPath> | ((fieldValue: NestedValue<TObject, TPath>) => NestedValue<TObject, TPath>)
 }
 
 
