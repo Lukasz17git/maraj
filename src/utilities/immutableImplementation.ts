@@ -9,7 +9,7 @@ export type LiteralIndex = typeof LITERAL_INDEX
 type Tracker = { [K in string]?: Tracker }
 
 type OptionValues = 'error' | 'skip' | 'add'
-type Options = { onNewProps?: OptionValues, onNewIndexes?: OptionValues }
+type Options = { onNewProps?: OptionValues, onNewIndexes?: OptionValues, onPathsIntersectedByPrimitiveValues?: OptionValues }
 // TODO: Add this option?
 // type Options = { onNewProps?: OptionValues, onNewIndexes?: OptionValues, onNewPathsMatchingInsidePrimitiveValues?: OptionValues }
 type ImmutableImplementation = <T, U extends UpdateObject<T>>(state: T, updateObject: U, options?: Options) => T | ExtendedUpdate<T, U>
@@ -60,17 +60,20 @@ const immutableImplementation: ImmutableImplementation = (state, updates, option
          /* checking the type in "valueInCurrentKey" */
          const isCurrentValueAnObject = isObjectLiteral(valueInCurrentKey)
          const isCurrentValueAnArray = isArray(valueInCurrentKey)
+         const isCurrentValueUndefined = valueInCurrentKey === undefined
          /* It has to be undefined instead of "hasOwnProperty" because i may want to add more nested props in this value
           and there could be a case where the prop exist and is set up as undefined.
           For example partial properties set to undefined which can contain an object/array. */
          //TODO: maybe i need to override also primitive properties?, because a prop can have object/primitive as different values?
-         const isCurrentValueUndefined = valueInCurrentKey === undefined
 
-         if (!isCurrentValueAnObject && !isCurrentValueAnArray && !isCurrentValueUndefined) throw new Error(`Property "${currentKey}" in "${pathSeparatedByDots}" is a primitive`)
+         if (!isCurrentValueAnObject && !isCurrentValueAnArray && !isCurrentValueUndefined) {
+            if (options.onPathsIntersectedByPrimitiveValues === 'error') throw new Error(`Property "${currentKey}" in "${pathSeparatedByDots}" is a primitive`)
+            if (options.onPathsIntersectedByPrimitiveValues === 'skip') continue
+         }
 
          /* checking if the current path has been already shallowCopied */
          if (!shallowCopiedPathsTracker[currentKey]) {
-            if (isCurrentValueUndefined) {
+            if (!isCurrentValueAnObject && !isCurrentValueAnArray) {
                //TODO: Maybe add so you can't add new string properties to an array?
                const isCurrentKeyAnIndex = isArray(currentParent) && isStringIndex(currentKey)
                const isNextKeyAnIndex = isStringIndex(pathKeys[1]!)
