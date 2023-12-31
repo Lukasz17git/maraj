@@ -10,7 +10,9 @@ type Tracker = { [K in string]?: Tracker }
 
 type OptionValues = 'error' | 'skip' | 'add'
 type Options = { onNewProps?: OptionValues, onNewIndexes?: OptionValues }
-type ImmutableImplementation = <T extends Record<PropertyKey, any>, U extends UpdateObject<T>>(state: T, updateObject: U, options?: Options) => T | ExtendedUpdate<T, U>
+// TODO: Add this option?
+// type Options = { onNewProps?: OptionValues, onNewIndexes?: OptionValues, onNewPathsMatchingInsidePrimitiveValues?: OptionValues }
+type ImmutableImplementation = <T, U extends UpdateObject<T>>(state: T, updateObject: U, options?: Options) => T | ExtendedUpdate<T, U>
 
 const toJson = (v: any) => JSON.stringify(v)
 const isArray = (v: any) => Array.isArray(v)
@@ -37,7 +39,9 @@ const immutableImplementation: ImmutableImplementation = (state, updates, option
       /* setting up the keys, tracker and the current parent (all mutable)*/
       let pathKeys = pathSeparatedByDots.split(".")
       let shallowCopiedPathsTracker = alreadyShallowCopiedPaths
-      let currentParent: Record<string, any> = stateCopy
+
+      /* It has to be an object literal or array because of the previous lines */
+      let currentParent = stateCopy as Record<string, any>
 
       /* shallow copy recursively the path until i reach the object/array containing the last key */
       while (pathKeys.length > 1) {
@@ -116,7 +120,7 @@ const immutableImplementation: ImmutableImplementation = (state, updates, option
 }
 
 
-type ImmutableUpdate = <TObject extends Record<PropertyKey, any>>(
+type ImmutableUpdate = <TObject>(
    state: TObject,
    dotPathUpdateObject: UpdateObject<TObject>,
    options?: Options
@@ -135,7 +139,7 @@ type ImmutableUpdate = <TObject extends Record<PropertyKey, any>>(
 export const update: ImmutableUpdate = (state, dotPathUpdateObject, options) => immutableImplementation(state, dotPathUpdateObject, options)
 
 
-type ExtendableImmutableUpdate = <TObject extends Record<PropertyKey, any>, TUpdateObject extends UpdateObject<TObject>
+type ExtendableImmutableUpdate = <TObject, TUpdateObject extends UpdateObject<TObject>
 >(
    state: TObject,
    dotPathUpdateObject: TUpdateObject,

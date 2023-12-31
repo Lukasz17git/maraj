@@ -1,5 +1,5 @@
 
-type Set = <T>(newValue: T) => (value: T) => T
+type Set = <T>(newValue: T) => (v: unknown) => T
 
 /**
  * Allows to set strongly typed values (removing inacurate "undefined" inference) in nested values inside arrays.

@@ -118,7 +118,7 @@ type NestedPathKeys<T, K extends string | number> = { [Key in keyof T]: Key exte
 /** Extract value if its a function */
 type Value<T> = T extends (...args: any) => any ? ReturnType<T> : T
 /** To check if an empty object is provided */
-type EmptyObject = Record<string | number | symbol, never>
+type EmptyObject = Record<PropertyKey, never>
 
 /** Used to extract the type from a dot-path update object. */
 export type ExtractTypeFromDotPathUpdateObject<T extends Record<string, any>> =
@@ -139,8 +139,8 @@ export type ExtractTypeFromDotPathUpdateObject<T extends Record<string, any>> =
 
 /** New expanded value after aplying updates including new properties */
 export type ExtendedUpdate<
-   TObject extends Record<string | number | symbol, any>,
-   TDotPathUpdateObject extends Record<string | number | symbol, any>
+   TObject,
+   TDotPathUpdateObject extends Record<PropertyKey, any>
 > = TObject extends Array<infer U>
    ? ExtractTypeFromDotPathUpdateObject<TDotPathUpdateObject> extends Array<infer W>
    ? Array<U | W>
