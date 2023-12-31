@@ -1,5 +1,12 @@
 # maraj
 
+## 2.7.3
+
+### Patch Changes
+
+- cc4c6d6: added keyof type
+- 1fe0465: improved types
+
 ## 2.7.2
 
 ### Patch Changes
