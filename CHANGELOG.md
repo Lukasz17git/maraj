@@ -1,5 +1,11 @@
 # maraj
 
+## 2.7.2
+
+### Patch Changes
+
+- bde9a0c: made types less strict for DX improvement, added new option inside the options prop in the update function
+
 ## 2.7.1
 
 ### Patch Changes
