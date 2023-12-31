@@ -41,6 +41,8 @@ originalValue.files[1] === newValue.files[1] // true
   - { a: { b: {"c.d": ... } } }
   - { a: { b: {"c": { d: ... } } } }
 
+  It can still work with dot-paths keys containing an object or array, however the paths targeting nested properties in this key are forbiden. For example having the following object { a: { "b.c": { d: ... } } } you can use the path "a" and "a.b.c", but you cant use "a.b.c.d", this path will create a new property "b" inside "a", then "c" and lastly "d" resulting in the following object { a: { "b.c": { d: ... } }, b: { c: { d: ... } } }
+
 - In "extendableUpdate", **numbers** inside path will **always** create a mutable **array** if the array/object doesnt exist beforehand. If you want an object/tuple/readonlyArray instead of an array, add it beforehand as type.
 
 ```ts
@@ -57,22 +59,27 @@ const updatedValue2 = extendableUpdate({}, {
 // updatedValue2 = { files: { '1': { name: 'new name' } } }
 ```
 
-- The type "UpdateDotPathObject" (the type of the object provided containing the updates, the one used as second parameter in the update function) if used to create new update objects using computed properties { [key]: value } (middlewares for example) will always throw a ts error even if the typing is correct. [Playground simple explanation](https://www.typescriptlang.org/play?ts=5.3.2#code/LAKALgngDgpgBAGQJYGcxwLxwOQENtwA+cABgCQDeAdgK4C2ARjAE4C+JooksiqYASjADGAe2YATTHApwA2gGk4SKrzQBdAPwAuOItacQoqmjhDmMXGBiDREqQB4AKnBgAPK1XEpVYAHwAKAGsYCB1HAEpMX2lQODijE3MhHWQ0GzFJLApYuNyAejy4AD0wbxZmMR0UZSF4ADcAFgA6AGYmgFYldAB3JAAbPrgwAAsK7rhcFXKxCfQhYeFA5QBzUxE6KBorSWCIb0nJOtw+mhhvGmqqVasNvst4PqQrZmOyupgVJAAzIYWh6BWSm8tiSYByuTkuzUOl24P0IFy5jANGYKiSoFYQA)
+- The type "UpdateObject" (the type of the object provided containing the updates, used as second parameter in the update function) if used to create new update objects using computed properties in a inline syntax { [key]: value } will always throw a ts error even if the typing is correct, use the second syntax.
 
 ```ts
-const updateFieldStore = <TPath extends DotPaths<Store>>(
+const updateFieldStore = <T, TPath extends DotPaths<T>>(
+   state: T,
    path: TPath,
-   newValue: UpdateDotPathValue<Store, TPath>
+   newValue: UpdateValue<T, TPath>
 ) => {
-   const update: UpdateDotPathObject<Store> = {
-      // ^throws ts error even if the typing is correct
+   // ts error even if the typing is correct (typescript issue)
+   const updateObject1: UpdateObject<T> = {
       [path]: newValue
-   } // fix: coherce it with " as UpdateDotPathObject<Store>"
-   return update
+   }
+
+   // All good, no ts error
+   const updateObject2: UpdateObject<T> = {}
+   updateObject[path] = newValue
+   
 }
 ```
 
-- Use the "set" utility if typescript doesn't infer properly _"an optional field"_ vs a _"field which can have 'undefined' as type"_. Usually happens in optional nested props inside arrays.
+- Use the "set" utility if typescript doesn't infer properly *"an optional field"* vs a *"field which can have 'undefined' as type"*. Usually happens in nested props inside arrays.
 
 ```ts
 const updatedValue = update(data, {
