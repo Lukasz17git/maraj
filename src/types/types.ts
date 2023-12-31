@@ -100,11 +100,13 @@ export type ReturnedValueInPath<TObject, TPath> =
  */
 
 /** Value of a dot-path update object, can be the value or a function. */
-export type UpdateValue<TObject, TPath> = ValueInPath<TObject, TPath> | ((fieldValue: ValueInPath<TObject, TPath>) => ValueInPath<TObject, TPath>)
+export type UpdateValue<TObject, TPath> =
+   ValueInPath<TObject, TPath> extends never ? never :
+   ValueInPath<TObject, TPath> | ((fieldValue: ValueInPath<TObject, TPath>) => ValueInPath<TObject, TPath>)
 
 /** Dot-path update object, used to give updates to the updateImmutably function. */
 export type UpdateObject<TObject, TPaths extends PropertyKey = DotPaths<TObject>> = {
-   [TPath in TPaths]?: ValueInPath<TObject, TPath> | ((fieldValue: ValueInPath<TObject, TPath>) => ValueInPath<TObject, TPath>)
+   [Path in TPaths]?: UpdateValue<TObject, Path>
 }
 
 
@@ -155,4 +157,5 @@ export type ExtendedUpdate<
    ? ExtractTypeFromDotPathUpdateObject<TDotPathUpdateObject> extends Array<infer W>
    ? Array<U | W>
    : TObject & ExtractTypeFromDotPathUpdateObject<TDotPathUpdateObject>
-   : ExtractTypeFromDotPathUpdateObject<TObject & TDotPathUpdateObject>
+   : TObject & ExtractTypeFromDotPathUpdateObject<TDotPathUpdateObject>
+   // : ExtractTypeFromDotPathUpdateObject<TDotPathUpdateObject & TObject>
