@@ -7,6 +7,7 @@ export { isObjectLiteral } from './utilities/isObjectLiteral'
 export { isStringIndex, parseStringIndex } from './utilities/stringIndex'
 export type { LiteralIndex } from './utilities/immutableImplementation'
 export type {
+   KeyOf,
    DotPaths,
    ValueInPath,
    ReturnedValueInPath,

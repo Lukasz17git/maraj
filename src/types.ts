@@ -10,7 +10,7 @@ import { LiteralIndex } from "./utilities/immutableImplementation";
 type PrimitivesAndNativeObjects = null | undefined | string | number | boolean | symbol | bigint | Date | FileList | File
 
 /** Array indexes type. */
-type ArrayIndexes = number | LiteralIndex
+type ArrayIndexes = number | `${number}` | LiteralIndex
 
 /** To check if a ReadonlyArray is a tuple or not. */
 type IsTuple<T extends ReadonlyArray<any>> = number extends T['length'] ? false : true;
@@ -24,26 +24,36 @@ type IsTuple<T extends ReadonlyArray<any>> = number extends T['length'] ? false 
 /** Dot-paths of an array. */
 type ArrayPaths<TInnerType, TAllowedTypes> = TInnerType extends TAllowedTypes
    ? TInnerType extends PrimitivesAndNativeObjects
-   ? number | `${ArrayIndexes}`
-   : number | `${ArrayIndexes}` | `${ArrayIndexes}.${DotPaths<TInnerType, TAllowedTypes>}`
-   : `${ArrayIndexes}.${DotPaths<TInnerType, TAllowedTypes>}`
+   ? ArrayIndexes
+   : ArrayIndexes | `${ArrayIndexes}.${DotPathsImplementation<TInnerType, TAllowedTypes>}`
+   : `${ArrayIndexes}.${DotPathsImplementation<TInnerType, TAllowedTypes>}`
 
 /** Dot-paths of an object. */
 type ObjectPaths<T, TAllowedTypes> = {
    [Key in keyof T & (string | number)]: T[Key] extends TAllowedTypes
    ? T[Key] extends PrimitivesAndNativeObjects
    ? `${Key}`
-   : `${Key}` | `${Key}.${DotPaths<T[Key], TAllowedTypes>}`
-   : `${Key}.${DotPaths<T[Key], TAllowedTypes>}`
-}[keyof T & (string | number)]
+   : `${Key}` | `${Key}.${DotPathsImplementation<T[Key], TAllowedTypes>}`
+   : `${Key}.${DotPathsImplementation<T[Key], TAllowedTypes>}`
+}[keyof T & (string | number)] & unknown //TODO: Need to check if (& unknown) works properly
 
 /** Dot-paths of a tuple. */
-type TuplePaths<T, TAllowedTypes> = ObjectPaths<Omit<T, keyof any[]>, TAllowedTypes>
+type TuplePaths<T, TAllowedTypes> = ObjectPaths<Omit<T, keyof any[]>, TAllowedTypes> & unknown //TODO: Need to check if (& unknown) works properly
 
-/** Literal union of all posible dot-paths which satisfy provided types as second argument (default: any). */
-export type DotPaths<T, TAllowedTypes = any> = T extends ReadonlyArray<infer U> ?
+/** Dot-paths implementation */
+type DotPathsImplementation<T, TAllowedTypes = any> = T extends ReadonlyArray<infer U> ?
    IsTuple<T> extends true ? TuplePaths<T, TAllowedTypes> : ArrayPaths<U, TAllowedTypes>
    : T extends PrimitivesAndNativeObjects ? never : ObjectPaths<T, TAllowedTypes>
+
+/** Extract Keys from any kind of type, including objects, arrays, tuples. */
+export type KeyOf<T, TAllowedTypes = any> =
+   T extends ReadonlyArray<infer U>
+   ? U extends TAllowedTypes ? IsTuple<T> extends true ? keyof Omit<T, keyof any[]> : ArrayIndexes : never
+   : T extends PrimitivesAndNativeObjects ? never
+   : { [Key in keyof T]: T[Key] extends TAllowedTypes ? Key : never }[keyof T]
+
+/** Literal union of all posible dot-paths which satisfy provided types as second argument (default: any). */
+export type DotPaths<T, TAllowedTypes = any> = KeyOf<T, TAllowedTypes> | DotPathsImplementation<T, TAllowedTypes>
 
 
 /**
