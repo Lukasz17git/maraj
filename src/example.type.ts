@@ -1,4 +1,4 @@
-import { DotPaths, UpdateObject } from "./types"
+import { DotPaths, UpdateObject } from "./types/types"
 
 const exampleSymbol = Symbol()
 const exampleSymbol2 = Symbol()

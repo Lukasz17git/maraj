@@ -13,4 +13,4 @@ export type {
    ReturnedValueInPath,
    UpdateObject,
    UpdateValue,
-} from './types'
+} from './types/types'

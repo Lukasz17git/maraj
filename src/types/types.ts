@@ -1,4 +1,4 @@
-import { LiteralIndex } from "./utilities/immutableImplementation";
+import { LiteralIndex } from "../utilities/immutableImplementation";
 
 /**
  * --------------------------------------------

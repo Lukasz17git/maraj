@@ -1,4 +1,4 @@
-import { UpdateObject, ExtendedUpdate } from "../types";
+import { UpdateObject, ExtendedUpdate } from "../types/types";
 import { isObjectLiteral } from "./isObjectLiteral";
 import { isStringIndex } from "./stringIndex";
 

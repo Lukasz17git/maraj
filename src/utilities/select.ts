@@ -1,4 +1,4 @@
-import { DotPaths, ReturnedValueInPath } from "../types"
+import { DotPaths, ReturnedValueInPath } from "../types/types"
 
 type Select = {
    <T, TPath extends DotPaths<T>>(state: T, path: TPath): ReturnedValueInPath<T, TPath>
