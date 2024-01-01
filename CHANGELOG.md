@@ -1,5 +1,11 @@
 # maraj
 
+## 2.8.0
+
+### Minor Changes
+
+- dcebe1e: added strictCallback, improved flexibility in the update function
+
 ## 2.7.3
 
 ### Patch Changes
