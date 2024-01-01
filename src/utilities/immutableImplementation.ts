@@ -1,4 +1,4 @@
-import { UpdateObject, ExtendedUpdate } from "../types/types";
+import { UpdateObject, ExtendedUpdate, DotPaths } from "../types/types";
 import { isObjectLiteral } from "./isObjectLiteral";
 import { isStringIndex } from "./stringIndex";
 
@@ -123,9 +123,9 @@ const immutableImplementation: ImmutableImplementation = (state, updates, option
 }
 
 
-type ImmutableUpdate = <TObject>(
+type ImmutableUpdate = <TObject, TAllowedDotPathKeys extends PropertyKey = DotPaths<TObject>>(
    state: TObject,
-   dotPathUpdateObject: UpdateObject<TObject>,
+   dotPathUpdateObject: UpdateObject<TObject, TAllowedDotPathKeys>,
    options?: Options
 ) => TObject
 
@@ -157,7 +157,7 @@ type ExtendableImmutableUpdate = <TObject, TUpdateObject extends UpdateObject<TO
  * @returns New Updated Object.
  */
 //@ts-ignore
-export const extendableUpdate: ExtendableImmutableUpdate = (state, dotPathUpdateObject) => immutableImplementation(state, dotPathUpdateObject)
+export const experimental_extendableUpdate: ExtendableImmutableUpdate = (state, dotPathUpdateObject) => immutableImplementation(state, dotPathUpdateObject)
 
 /*
 TODO: Maybe change it so it can accept any kind of value, and if its primitive the returned value

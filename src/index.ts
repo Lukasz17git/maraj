@@ -2,9 +2,11 @@ export { remove } from './utilities/remove'
 export { select } from './utilities/select'
 export { splitPathAtLastKey } from './utilities/splitPathAtLastKey'
 export { set } from './utilities/set'
-export { update, extendableUpdate } from './utilities/immutableImplementation'
+export { update, experimental_extendableUpdate } from './utilities/immutableImplementation'
 export { isObjectLiteral } from './utilities/isObjectLiteral'
 export { isStringIndex, parseStringIndex } from './utilities/stringIndex'
+export { strictCallback } from './utilities/strictCallback'
+export type { StrictCallback, StrictCallbackReturn } from './utilities/strictCallback'
 export type { LiteralIndex } from './utilities/immutableImplementation'
 export type {
    KeyOf,
