@@ -8,6 +8,7 @@ export { isStringIndex, parseStringIndex } from './utilities/stringIndex'
 export { unsealStrictCallback } from './utilities/strictCallback'
 export type { StrictCallback } from './utilities/strictCallback'
 export type { LiteralIndex } from './utilities/immutableImplementation'
+export type { ObjectLiteral } from './utilities/isObjectLiteral'
 export type {
    KeyOf,
    DotPaths,
