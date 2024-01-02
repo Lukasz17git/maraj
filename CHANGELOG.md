@@ -1,5 +1,11 @@
 # maraj
 
+## 2.8.3
+
+### Patch Changes
+
+- 18136ef: added ObjectLiteral as export value and improved its type
+
 ## 2.8.2
 
 ### Patch Changes
