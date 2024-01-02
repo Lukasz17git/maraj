@@ -5,4 +5,4 @@ export const parseStringIndex = (v: string) => {
    return areEqual ? parsedInt : null
 }
 
-export const isStringIndex = (v: string) => parseInt(v).toString() === v
+export const isStringIndex = (v: string): v is `${number}` => parseInt(v).toString() === v
