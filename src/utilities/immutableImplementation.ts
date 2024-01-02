@@ -10,8 +10,6 @@ type Tracker = { [K in string]?: Tracker }
 
 type OptionValues = 'error' | 'skip' | 'add'
 type Options = { onNewProps?: OptionValues, onNewIndexes?: OptionValues, onPathsIntersectedByPrimitiveValues?: OptionValues }
-// TODO: Add this option?
-// type Options = { onNewProps?: OptionValues, onNewIndexes?: OptionValues, onNewPathsMatchingInsidePrimitiveValues?: OptionValues }
 type ImmutableImplementation = <T, U extends UpdateObject<T>>(state: T, updateObject: U, options?: Options) => T | ExtendedUpdate<T, U>
 
 const toJson = (v: any) => JSON.stringify(v)
@@ -123,7 +121,7 @@ const immutableImplementation: ImmutableImplementation = (state, updates, option
 }
 
 
-type ImmutableUpdate = <TObject, TAllowedDotPathKeys extends PropertyKey = DotPaths<TObject>>(
+type ImmutableUpdate = <TObject, TAllowedDotPathKeys extends DotPaths<TObject> = DotPaths<TObject>>(
    state: TObject,
    dotPathUpdateObject: UpdateObject<TObject, TAllowedDotPathKeys>,
    options?: Options
@@ -142,8 +140,7 @@ type ImmutableUpdate = <TObject, TAllowedDotPathKeys extends PropertyKey = DotPa
 export const update: ImmutableUpdate = (state, dotPathUpdateObject, options) => immutableImplementation(state, dotPathUpdateObject, options)
 
 
-type ExtendableImmutableUpdate = <TObject, TUpdateObject extends UpdateObject<TObject>
->(
+type ExtendableImmutableUpdate = <TObject, TUpdateObject extends UpdateObject<TObject> = UpdateObject<TObject>>(
    state: TObject,
    dotPathUpdateObject: TUpdateObject,
 ) => ExtendedUpdate<TObject, TUpdateObject>
@@ -160,6 +157,6 @@ type ExtendableImmutableUpdate = <TObject, TUpdateObject extends UpdateObject<TO
 export const experimental_extendableUpdate: ExtendableImmutableUpdate = (state, dotPathUpdateObject) => immutableImplementation(state, dotPathUpdateObject)
 
 /*
-TODO: Maybe change it so it can accept any kind of value, and if its primitive the returned value
+TODO: Maybe change it so it can accept any kind of value in a typed way?, and if its primitive the returned value
 has to be the value provided, and maybe it can only accept { '': ...  } update object.
 */

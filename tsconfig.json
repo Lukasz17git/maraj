@@ -2,6 +2,7 @@
   "include": ["./"],
 //   "exclude": ["./**/*.test.ts"],
   "compilerOptions": {
+   "noErrorTruncation": true,
     /* Visit https://aka.ms/tsconfig to read more about this file */
 
     /* Projects */

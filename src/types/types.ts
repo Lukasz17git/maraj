@@ -54,7 +54,7 @@ export type KeyOf<T, TAllowedTypes = any> =
 
 /** Literal union of all posible dot-paths which satisfy provided types as second argument (default: any). */
 export type DotPaths<T, TAllowedTypes = any> = KeyOf<T, TAllowedTypes> | DotPathsImplementation<T, TAllowedTypes>
-
+//TODO: ALLOW CHOOSING THE ALLOWED DEPTH, SO FOR EXAMPLE 3, IT WILL ONLY ITERATE UNTIL DEPTH OF 3?
 
 /**
  * --------------------------------------------
