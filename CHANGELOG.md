@@ -1,5 +1,12 @@
 # maraj
 
+## 2.8.2
+
+### Patch Changes
+
+- c3ab617: isStringIndex type narrowing
+- 4e63888: improved isObjectLiteral typing and type narrowing. Fixed update highlighting type issue in its second parameter.
+
 ## 2.8.1
 
 ### Patch Changes
