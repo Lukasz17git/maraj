@@ -1,5 +1,11 @@
 # maraj
 
+## 2.8.1
+
+### Patch Changes
+
+- e7b30cd: improved strictCallback
+
 ## 2.8.0
 
 ### Minor Changes

@@ -1,5 +1,0 @@
----
-"maraj": patch
----
-
-improved strictCallback
