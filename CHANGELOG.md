@@ -1,5 +1,11 @@
 # maraj
 
+## 2.8.4
+
+### Patch Changes
+
+- c822e9c: improved "remove" function
+
 ## 2.8.3
 
 ### Patch Changes
