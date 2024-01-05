@@ -1,19 +1,4 @@
-import { LiteralIndex } from "../utilities/immutableImplementation";
-
-/**
- * --------------------------------------------
- *  UTILITIES
- * --------------------------------------------
- */
-
-/** Primitives and browser native objects. */
-type PrimitivesAndNativeObjects = null | undefined | string | number | boolean | symbol | bigint | Date | FileList | File
-
-/** Array indexes type. */
-type ArrayIndexes = number | `${number}` | LiteralIndex
-
-/** To check if a ReadonlyArray is a tuple or not. */
-type IsTuple<T extends ReadonlyArray<any>> = number extends T['length'] ? false : true;
+import { ExtendedArrayIndexes, LiteralIndex, PrimitivesAndNativeObjects, SmartKeyOf, Tuple } from "../utilities/(utility.types)";
 
 /**
  * --------------------------------------------
@@ -24,9 +9,9 @@ type IsTuple<T extends ReadonlyArray<any>> = number extends T['length'] ? false 
 /** Dot-paths of an array. */
 type ArrayPaths<TInnerType, TAllowedTypes> = TInnerType extends TAllowedTypes
    ? TInnerType extends PrimitivesAndNativeObjects
-   ? ArrayIndexes
-   : ArrayIndexes | `${ArrayIndexes}.${DotPathsImplementation<TInnerType, TAllowedTypes>}`
-   : `${ArrayIndexes}.${DotPathsImplementation<TInnerType, TAllowedTypes>}`
+   ? ExtendedArrayIndexes
+   : ExtendedArrayIndexes | `${ExtendedArrayIndexes}.${DotPathsImplementation<TInnerType, TAllowedTypes>}`
+   : `${ExtendedArrayIndexes}.${DotPathsImplementation<TInnerType, TAllowedTypes>}`
 
 /** Dot-paths of an object. */
 type ObjectPaths<T, TAllowedTypes> = {
@@ -35,25 +20,18 @@ type ObjectPaths<T, TAllowedTypes> = {
    ? `${Key}`
    : `${Key}` | `${Key}.${DotPathsImplementation<T[Key], TAllowedTypes>}`
    : `${Key}.${DotPathsImplementation<T[Key], TAllowedTypes>}`
-}[keyof T & (string | number)] & unknown //TODO: Need to check if (& unknown) works properly
+}[keyof T & (string | number)] & {} //TODO: Need to check if (& {}) works properly
 
 /** Dot-paths of a tuple. */
-type TuplePaths<T, TAllowedTypes> = ObjectPaths<Omit<T, keyof any[]>, TAllowedTypes> & unknown //TODO: Need to check if (& unknown) works properly
+type TuplePaths<T, TAllowedTypes> = ObjectPaths<Omit<T, keyof any[]>, TAllowedTypes> & {} //TODO: Need to check if (& {}) works properly
 
 /** Dot-paths implementation */
 type DotPathsImplementation<T, TAllowedTypes = any> = T extends ReadonlyArray<infer U> ?
-   IsTuple<T> extends true ? TuplePaths<T, TAllowedTypes> : ArrayPaths<U, TAllowedTypes>
+   T extends Tuple ? TuplePaths<T, TAllowedTypes> : ArrayPaths<U, TAllowedTypes>
    : T extends PrimitivesAndNativeObjects ? never : ObjectPaths<T, TAllowedTypes>
 
-/** Extract Keys from any kind of type, including objects, arrays, tuples. */
-export type KeyOf<T, TAllowedTypes = any> =
-   T extends ReadonlyArray<infer U>
-   ? U extends TAllowedTypes ? IsTuple<T> extends true ? keyof Omit<T, keyof any[]> : ArrayIndexes : never
-   : T extends PrimitivesAndNativeObjects ? never
-   : { [Key in keyof T]: T[Key] extends TAllowedTypes ? Key : never }[keyof T]
-
 /** Literal union of all posible dot-paths which satisfy provided types as second argument (default: any). */
-export type DotPaths<T, TAllowedTypes = any> = KeyOf<T, TAllowedTypes> | DotPathsImplementation<T, TAllowedTypes>
+export type DotPaths<T, TAllowedTypes = any> = SmartKeyOf<T, TAllowedTypes> | DotPathsImplementation<T, TAllowedTypes>
 //TODO: ALLOW CHOOSING THE ALLOWED DEPTH, SO FOR EXAMPLE 3, IT WILL ONLY ITERATE UNTIL DEPTH OF 3?
 
 /**
@@ -158,4 +136,4 @@ export type ExtendedUpdate<
    ? Array<U | W>
    : TObject & ExtractTypeFromDotPathUpdateObject<TDotPathUpdateObject>
    : TObject & ExtractTypeFromDotPathUpdateObject<TDotPathUpdateObject>
-   // : ExtractTypeFromDotPathUpdateObject<TDotPathUpdateObject & TObject>
+// : ExtractTypeFromDotPathUpdateObject<TDotPathUpdateObject & TObject>

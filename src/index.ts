@@ -1,19 +1,17 @@
-export { remove } from './utilities/remove'
-export { select } from './utilities/select'
-export { splitPathAtLastKey } from './utilities/splitPathAtLastKey'
-export { set } from './utilities/set'
-export { update, experimental_extendableUpdate } from './utilities/immutableImplementation'
-export { isObjectLiteral } from './utilities/isObjectLiteral'
-export { isStringIndex, parseStringIndex } from './utilities/stringIndex'
-export { unsealStrictCallback } from './utilities/strictCallback'
-export type { StrictCallback } from './utilities/strictCallback'
-export type { LiteralIndex } from './utilities/immutableImplementation'
-export type { ObjectLiteral } from './utilities/isObjectLiteral'
+export { remove } from './immutable/remove'
+export { select } from './immutable/select'
+export { splitPathAtLastKey } from './immutable/splitPathAtLastKey'
+export { set } from './immutable/set'
+export { update, experimental_extendableUpdate } from './immutable/immutableImplementation'
+export { isObjectLiteral } from './strictness/isObjectLiteral'
+export { isStringIndex, parseStringIndex } from './immutable/stringIndex'
+export { unsealStrictCallback } from './immutable/strictCallback'
+export type { StrictCallback } from './immutable/strictCallback'
+export type { ObjectLiteral } from './strictness/isObjectLiteral'
 export type {
-   KeyOf,
    DotPaths,
    ValueInPath,
    ReturnedValueInPath,
    UpdateObject,
    UpdateValue,
-} from './types/types'
+} from './immutable/(immutable.types)'

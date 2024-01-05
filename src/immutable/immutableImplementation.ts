@@ -1,10 +1,6 @@
-import { UpdateObject, ExtendedUpdate, DotPaths } from "../types/types";
-import { isObjectLiteral } from "./isObjectLiteral";
+import { UpdateObject, ExtendedUpdate, DotPaths } from "./(immutable.types)";
+import { isObjectLiteral } from "../strictness/isObjectLiteral";
 import { isStringIndex } from "./stringIndex";
-
-/** Index literal type to improve DX at managing updates. */
-const LITERAL_INDEX = "${number}"
-export type LiteralIndex = typeof LITERAL_INDEX
 
 type Tracker = { [K in string]?: Tracker }
 

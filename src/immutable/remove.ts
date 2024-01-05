@@ -1,4 +1,4 @@
-import { isObjectLiteral } from "./isObjectLiteral";
+import { isObjectLiteral } from "../strictness/isObjectLiteral";
 
 
 /** Returns only the optional keys of an object. */

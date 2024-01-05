@@ -1,4 +1,4 @@
-import { DotPaths, ReturnedValueInPath } from "../types/types"
+import { DotPaths, ReturnedValueInPath } from "./(immutable.types)"
 
 type Select = {
    <T, TPath extends DotPaths<T>>(state: T, path: TPath): ReturnedValueInPath<T, TPath>
