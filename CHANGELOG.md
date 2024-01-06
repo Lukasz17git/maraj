@@ -1,5 +1,11 @@
 # maraj
 
+## 2.9.0
+
+### Minor Changes
+
+- bc35ab6: added strictness
+
 ## 2.8.4
 
 ### Patch Changes
