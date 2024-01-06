@@ -13,7 +13,7 @@ export type {
 
 export { forEachEntry } from './strictness/forEachEntry'
 export { isObjectLiteral } from './strictness/isObjectLiteral'
-export { s, ensureStrictness } from './strictness/strict'
+export { s, strict, ensureStrictness } from './strictness/strict'
 export { isStringIndex, parseStringIndex } from './strictness/stringIndex'
 export type {
    PrimitivesAndNativeObjects,
