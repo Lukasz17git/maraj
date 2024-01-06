@@ -1,24 +1,15 @@
 import { DotPaths } from "../immutable/(immutable.types)"
-import { Prettify, SmartKeyOf } from "../utilities/(utility.types)"
+import { LITERAL_INDEX } from "./literalIndex"
 
-/**
- * ObjectLiteral Implementation
- */
+/** Primitives and browser native objects. */
+export type PrimitivesAndNativeObjects = null | undefined | string | number | boolean | symbol | bigint | Date | FileList | File
 
-// type Iterator = typeof Symbol.iterator // Set & Map & ReadonlySet & ReadonlyMap & ReadonlyArray
-// type HasInstance = typeof Symbol.hasInstance // Function & File & Promise
-// type ToPrimitive = typeof Symbol.toPrimitive // Date
-// type Unscopables = typeof Symbol.unscopables // Array
-// type MatchAll = typeof Symbol.matchAll // RegExp
+/** Tuple type, it has to have at least property "0" */
+export type Tuple = ReadonlyArray<any> & { "0": any }
 
-// type NonObjectLiteralKeys = Unscopables | HasInstance | ToPrimitive | MatchAll | Iterator
-
-
-/**
- * --------------------------------------------
- *  OBJECT LITERAL
- * --------------------------------------------
- */
+/** Array indexes type. */
+export type LiteralIndex = typeof LITERAL_INDEX
+export type ExtendedArrayIndexes = number | `${number}` | LiteralIndex
 
 /** Object Literal */
 export type ObjectLiteral = {
@@ -32,45 +23,16 @@ export type ObjectLiteral = {
    [Symbol.matchAll]?: never; // RegExp
 }
 
-
-/**
- * Strict Implementation
- */
-
 /** Strict key */
-declare const strict: unique symbol
-type StrictKeySymbol = typeof strict
+declare const strictSymbol: unique symbol
+export type Strict<T> = T extends ObjectLiteral ? T & { [strictSymbol]: DotPaths<T> } : T
 
-/** Strict and nonStrict object literal */
-type NonStrictifiedObject = ObjectLiteral & { [strict]?: never }
-export type StrictifiedObject = ObjectLiteral & { [strict]: PropertyKey }
+/** Smart KeyOf (doesnt include the "strict" key) */
+export type KeyOf<T, TAllowedValuesInKeys = any> =
+   T extends ObjectLiteral ? T extends Strict<infer U> ? KeysOfObject<U, TAllowedValuesInKeys> : KeysOfObject<T, TAllowedValuesInKeys>
+   : T extends Tuple ? KeysOfObject<Omit<T, keyof any[]>, TAllowedValuesInKeys>
+   : T extends ReadonlyArray<infer U> ? U extends TAllowedValuesInKeys ? ExtendedArrayIndexes : never
+   : never
 
-/** UnStrictify */
-export type UnStrictify<T extends StrictifiedObject> = { [Key in Exclude<keyof T, StrictKeySymbol>]: T[Key] } //& {}
-
-/** Strictify */
-type Strictified<T extends NonStrictifiedObject> = Prettify<{ [strict]: DotPaths<T> } & T>
-
-/** Strict Omit */
-type StrictifiedOmit<
-   TObject extends StrictifiedObject,
-   TKeysToRemove extends (TAllowOnlyExistentKeys extends true ? keyof TObject : (keyof TObject | string & {} | number & {} | symbol & {})) = never,
-   TAllowOnlyExistentKeys extends boolean = true
-> = Strictified<{
-   [Key in Exclude<keyof TObject, TKeysToRemove | StrictKeySymbol>]: TObject[Key]
-}>
-
-/** StrictifiedPick */
-type StrictifiedPick<
-   TObject extends StrictifiedObject,
-   TKeysToPick extends SmartKeyOf<TObject>
-> = Strictified<{
-   [Key in TKeysToPick]: TObject[Key];
-}>
-
-/** StrictifiedIntersection */
-type StrictifiedIntersection<
-   TObject extends StrictifiedObject,
-   TObjectToAdd extends NonStrictifiedObject
-> = Strictified<UnStrictify<TObject> & TObjectToAdd>
+type KeysOfObject<T, TAllowedValuesInKeys> = { [Key in keyof T]: T[Key] extends TAllowedValuesInKeys ? Key : never }[keyof T]
 

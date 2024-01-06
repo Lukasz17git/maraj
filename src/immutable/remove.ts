@@ -1,18 +1,16 @@
+import { ObjectLiteral } from "../strictness/(strictness.types)";
 import { isObjectLiteral } from "../strictness/isObjectLiteral";
-
 
 /** Returns only the optional keys of an object. */
 type OptionalKeys<T> = { [K in keyof T]-?: {} extends Pick<T, K> ? K : never }[keyof T];
 
-
 /** Removes properties or indexes, order doesn't matter. */
-type Remove = <T extends Record<PropertyKey, any>>(
+type Remove = <T extends ObjectLiteral | any[]>(
    value: T,
    keys: T extends any[] ? (number | `${number}` | (number | `${number}`)[])
       : OptionalKeys<T> | (OptionalKeys<T>)[]
 ) => T
-//TODO: Improve the typing to remove the fields choosen, maybe split it into two different function overloading,
-// one for arrays and the other one for objects
+//TODO: Maybe add so you can remove required keys?
 
 /**
  * Removes properties or indexes, order doesn't matter.

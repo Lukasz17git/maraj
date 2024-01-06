@@ -1,7 +1,6 @@
 
 type PathWithoutLastKey = string
 type LastKey = string
-
 type SplitDotPathAtLastKey = <T extends string>(dotPath: T) => [PathWithoutLastKey, LastKey]
 
 /**

@@ -1,8 +1,8 @@
-import { ExtendedArrayIndexes, LiteralIndex, PrimitivesAndNativeObjects, SmartKeyOf, Tuple } from "../utilities/(utility.types)";
+import { ExtendedArrayIndexes, LiteralIndex, PrimitivesAndNativeObjects, KeyOf, Tuple } from "../strictness/(strictness.types)";
 
 /**
  * --------------------------------------------
- *  DOT PATH IMPLEMENTATION
+ *  DOT PATHS IMPLEMENTATION
  * --------------------------------------------
  */
 
@@ -31,8 +31,8 @@ type DotPathsImplementation<T, TAllowedTypes = any> = T extends ReadonlyArray<in
    : T extends PrimitivesAndNativeObjects ? never : ObjectPaths<T, TAllowedTypes>
 
 /** Literal union of all posible dot-paths which satisfy provided types as second argument (default: any). */
-export type DotPaths<T, TAllowedTypes = any> = SmartKeyOf<T, TAllowedTypes> | DotPathsImplementation<T, TAllowedTypes>
-//TODO: ALLOW CHOOSING THE ALLOWED DEPTH, SO FOR EXAMPLE 3, IT WILL ONLY ITERATE UNTIL DEPTH OF 3?
+export type DotPaths<T, TAllowedTypes = any> = KeyOf<T, TAllowedTypes> | DotPathsImplementation<T, TAllowedTypes>
+
 
 /**
  * --------------------------------------------
@@ -83,7 +83,7 @@ export type UpdateValue<TObject, TPath> =
    ValueInPath<TObject, TPath> | ((fieldValue: ValueInPath<TObject, TPath>) => ValueInPath<TObject, TPath>)
 
 /** Dot-path update object, used to give updates to the updateImmutably function. */
-export type UpdateObject<TObject, TPaths extends PropertyKey = DotPaths<TObject>> = {
+export type UpdateObject<TObject, TPaths extends DotPaths<TObject> = DotPaths<TObject>> = {
    [Path in TPaths]?: UpdateValue<TObject, Path>
 }
 

@@ -3,15 +3,24 @@ export { select } from './immutable/select'
 export { splitPathAtLastKey } from './immutable/splitPathAtLastKey'
 export { set } from './immutable/set'
 export { update, experimental_extendableUpdate } from './immutable/immutableImplementation'
-export { isObjectLiteral } from './strictness/isObjectLiteral'
-export { isStringIndex, parseStringIndex } from './immutable/stringIndex'
-export { unsealStrictCallback } from './immutable/strictCallback'
-export type { StrictCallback } from './immutable/strictCallback'
-export type { ObjectLiteral } from './strictness/isObjectLiteral'
 export type {
    DotPaths,
    ValueInPath,
    ReturnedValueInPath,
-   UpdateObject,
    UpdateValue,
+   UpdateObject,
 } from './immutable/(immutable.types)'
+
+export { forEachEntry } from './strictness/forEachEntry'
+export { isObjectLiteral } from './strictness/isObjectLiteral'
+export { s, ensureStrictness } from './strictness/strict'
+export { isStringIndex, parseStringIndex } from './strictness/stringIndex'
+export type {
+   PrimitivesAndNativeObjects,
+   Tuple,
+   LiteralIndex,
+   ExtendedArrayIndexes,
+   ObjectLiteral,
+   Strict,
+   KeyOf
+} from './strictness/(strictness.types)'

@@ -1,17 +1,12 @@
+import { ObjectLiteral } from "./(strictness.types)"
 
-type Iterator = typeof Symbol.iterator // Set & Map & ReadonlySet & ReadonlyMap & ReadonlyArray
-type HasInstance = typeof Symbol.hasInstance // Function & File & Promise
-type ToPrimitive = typeof Symbol.toPrimitive // Date
-type Unscopables = typeof Symbol.unscopables // Array
-type MatchAll = typeof Symbol.matchAll // RegExp
-
-type NonObjectLiteralKeys = Unscopables | HasInstance | ToPrimitive | MatchAll | Iterator
-export type ObjectLiteral = Record<PropertyKey, any> & { [K in NonObjectLiteralKeys]?: never }
 
 /** Checks if any provided value is an object literal or not */
-export const isObjectLiteral = (valueToTest: unknown): valueToTest is ObjectLiteral => !!valueToTest && Object.getPrototypeOf(valueToTest) === Object.prototype
+type IsObjectLiteral = (valueToTest: unknown) => valueToTest is ObjectLiteral
+export const isObjectLiteral: IsObjectLiteral = (valueToTest: unknown): valueToTest is ObjectLiteral => !!valueToTest && Object.getPrototypeOf(valueToTest) === Object.prototype
 
-// VALID TYPES
+
+// MUST BE TRUE TYPES
 type Is01 = {} extends ObjectLiteral ? true : false
 //   ^?
 type Is02 = Record<PropertyKey, any> extends ObjectLiteral ? true : false
@@ -33,9 +28,11 @@ type Is07 = typeof objectExample3 extends ObjectLiteral ? true : false
 //   ^?
 type Is08 = typeof objectExample4 extends ObjectLiteral ? true : false
 //   ^?
+type Is09 = ObjectLiteral extends ObjectLiteral ? true : false
+//   ^?
 
 
-// FALSY TYPES
+// MUST BE FALSE TYPES
 type Is3 = Date extends ObjectLiteral ? true : false
 //   ^?
 type Is4 = string extends ObjectLiteral ? true : false

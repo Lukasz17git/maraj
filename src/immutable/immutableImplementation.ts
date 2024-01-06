@@ -1,6 +1,6 @@
 import { UpdateObject, ExtendedUpdate, DotPaths } from "./(immutable.types)";
 import { isObjectLiteral } from "../strictness/isObjectLiteral";
-import { isStringIndex } from "./stringIndex";
+import { isStringIndex } from "../strictness/stringIndex";
 
 type Tracker = { [K in string]?: Tracker }
 
