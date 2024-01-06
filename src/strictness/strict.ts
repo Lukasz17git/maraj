@@ -8,8 +8,8 @@ export const strict: StrictFn = <T>(value: T) => value as Strict<T>
 export const s = strict
 
 /** Checks the strictness of a type passed to a function or callback without 3rd party implementation */
-type EnsureStrictness = <T extends U, U>(v: T extends U ? DotPaths<T> extends DotPaths<U> ? T : Exclude<DotPaths<T>, DotPaths<U>> : never) => U
-export const ensureStrictness: EnsureStrictness = (v) => v
+type StrictValueWrapper = <T extends U, U>(v: T extends U ? DotPaths<T> extends DotPaths<U> ? T : Exclude<DotPaths<T>, DotPaths<U>> : never) => U
+export const strictValueWrapper: StrictValueWrapper = (v) => v
 
 //ensureStrictness
 //strictTypeWrapper

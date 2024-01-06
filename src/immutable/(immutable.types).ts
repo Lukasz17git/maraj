@@ -1,4 +1,4 @@
-import { ExtendedArrayIndexes, LiteralIndex, PrimitivesAndNativeObjects, KeyOf, Tuple } from "../strictness/(strictness.types)";
+import { ExtendedArrayIndexes, LiteralIndex, PrimitivesAndNativeObjects, KeyOf, Tuple, Strict } from "../strictness/(strictness.types)";
 
 /**
  * --------------------------------------------
@@ -80,7 +80,7 @@ export type ReturnedValueInPath<TObject, TPath> =
 /** Value of a dot-path update object, can be the value or a function. */
 export type UpdateValue<TObject, TPath> =
    ValueInPath<TObject, TPath> extends never ? never :
-   ValueInPath<TObject, TPath> | ((fieldValue: ValueInPath<TObject, TPath>) => ValueInPath<TObject, TPath>)
+   ValueInPath<TObject, TPath> | ((fieldValue: ValueInPath<TObject, TPath>) => Strict<ValueInPath<TObject, TPath>>)
 
 /** Dot-path update object, used to give updates to the updateImmutably function. */
 export type UpdateObject<TObject, TPaths extends DotPaths<TObject> = DotPaths<TObject>> = {
