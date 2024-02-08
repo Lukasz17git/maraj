@@ -1,5 +1,15 @@
 # maraj
 
+## 2.10.0
+
+### Minor Changes
+
+- 8f2d7d3: added strictness to callbacks in update value, changed name of ensureStrictness to strictValueWrapper
+
+### Patch Changes
+
+- e821a7d: added additional export to strict function as "strict" name
+
 ## 2.9.0
 
 ### Minor Changes
