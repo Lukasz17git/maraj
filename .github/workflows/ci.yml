@@ -1,0 +1,81 @@
+# Two jobs, each usable on its own in other projects:
+# - ci: checks any Node project with an `npm run ci` script
+# - release: Changesets + npm; delete it if nothing is published, or change its "Publish" step
+
+name: CI
+
+# ------------------------------------------------------------
+# Triggers
+# ------------------------------------------------------------
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - '**'
+  pull_request:
+
+# ------------------------------------------------------------
+# Concurrency
+# ------------------------------------------------------------
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  # A new push cancels the older run, except on the default branch: a release must not stop halfway
+  cancel-in-progress: ${{ github.ref_name != github.event.repository.default_branch }}
+
+jobs:
+  # ------------------------------------------------------------
+  # CI: lint, format, tests and build on every supported Node
+  # ------------------------------------------------------------
+
+  ci:
+    # PRs from this repo already run on push, so only fork PRs run here
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.repository
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [22.x, 24.x]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - run: npm ci
+      - run: npm run ci
+
+  # ------------------------------------------------------------
+  # Release: Changesets version PR + npm publish
+  # ------------------------------------------------------------
+
+  release:
+    needs: ci
+    # Only the default branch (main or master) releases
+    if: github.ref_name == github.event.repository.default_branch
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # pushes the "Version Packages" branch, git tags and GitHub releases
+      pull-requests: write # opens the "Version Packages" PR
+      id-token: write # npm trusted publishing (OIDC), so no NPM_TOKEN secret
+    steps:
+      # Setup (registry-url and npm@11 are npm only)
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22.x
+          cache: 'npm'
+          registry-url: 'https://registry.npmjs.org'
+
+      # Trusted publishing needs npm >= 11.5.1; Node 22 comes with npm 10
+      - run: npm install -g npm@11
+      - run: npm ci
+
+      # Publish: with pending changesets opens the "Version Packages" PR; without them runs
+      # `npm run release` (CHANGELOG check, build, `changeset publish` of a version not yet on npm)
+      - name: Create Release Pull Request or Publish
+        # v2 for @changesets/cli v3; v1 publishes but creates no git tags or GitHub releases
+        uses: changesets/action@v2
+        with:
+          publish-script: npm run release

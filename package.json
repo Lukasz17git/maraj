@@ -25,7 +25,7 @@
       "lint": "tsc",
       "trace": "tsc --generateTrace trace",
       "ci": "npm run lint && npm run test && npm run build",
-      "release": "npm run lint && npm run test && npm run build && changeset publish"
+      "release": "node scripts/check-changelog.mjs && npm run build && changeset publish"
    },
    "repository": {
       "type": "git",
@@ -36,7 +36,7 @@
    },
    "homepage": "https://github.com/Lukasz17git/maraj#readme",
    "devDependencies": {
-      "@changesets/cli": "^2.27.1",
+      "@changesets/cli": "^3.0.3",
       "@microsoft/api-extractor": "^7.38.5",
       "@typescript/analyze-trace": "^0.10.1",
       "tsup": "^8.0.1",
