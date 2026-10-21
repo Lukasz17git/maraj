@@ -1,5 +1,11 @@
 # maraj
 
+## 2.11.0
+
+### Minor Changes
+
+- e901509: changed strictValueWrapper into strictType, more readable
+
 ## 2.10.0
 
 ### Minor Changes
