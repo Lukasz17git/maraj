@@ -1,6 +1,7 @@
 {
   "include": ["./"],
 //   "exclude": ["./**/*.test.ts"],
+  "exclude": ["node_modules", "dist", "benchmarks"],
   "compilerOptions": {
    "noErrorTruncation": true,
     /* Visit https://aka.ms/tsconfig to read more about this file */
