@@ -1,6 +1,7 @@
 // @ts-nocheck
 
 import { it, describe, expect } from 'vitest'
+import { runInNewContext } from 'node:vm'
 import { isObjectLiteral } from './isObjectLiteral'
 
 describe("isObjectLiteral test", () => {
@@ -50,14 +51,31 @@ describe("isObjectLiteral test", () => {
       expect(isObjectLiteral(async () => { })).toBe(false);
       expect(isObjectLiteral(() => { })).toBe(false);
    })
+
+   it('should return false for objects with another prototype', () => {
+      expect(isObjectLiteral(Object.create(null))).toBe(false)
+      expect(isObjectLiteral(Object.create({}))).toBe(false)
+      expect(isObjectLiteral(Object.create(Array.prototype))).toBe(false)
+      expect(isObjectLiteral(new (class User { })())).toBe(false)
+      expect(isObjectLiteral(Object.setPrototypeOf({}, null))).toBe(false)
+      expect(isObjectLiteral(runInNewContext('({})'))).toBe(false)
+   })
+
    it('should return true for literal objects', () => {
       expect(isObjectLiteral({})).toBe(true)
       expect(isObjectLiteral({ constructor: {} })).toBe(true)
       expect(isObjectLiteral({ constructor: undefined })).toBe(true)
       expect(isObjectLiteral({ constructor: null })).toBe(true)
+      expect(isObjectLiteral(Object.create(Object.prototype))).toBe(true)
+      expect(isObjectLiteral(new Object())).toBe(true)
+      expect(isObjectLiteral(Object.freeze({ a: 1 }))).toBe(true)
+      expect(isObjectLiteral(new Proxy({}, {}))).toBe(true)
+      expect(isObjectLiteral(JSON.parse('{"a":1}'))).toBe(true)
+      expect(isObjectLiteral(structuredClone({ a: 1 }))).toBe(true)
 
       // weird cases that doesn't affect the behaviour
       expect(isObjectLiteral(Math)).toBe(true);
       expect(isObjectLiteral(JSON)).toBe(true);
+      expect((function () { return isObjectLiteral(arguments) })()).toBe(true);
    })
 })

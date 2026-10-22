@@ -22,16 +22,20 @@ const immutableImplementation: ImmutableImplementation = (state, updates, option
    /* typeof state | ExtendedUpdate<typeof state, typeof updates> Assertion because it may add new props later in the execution */
    const stateCopy = (Array.isArray(state) ? [...state] : { ...state }) as typeof state | ExtendedUpdate<typeof state, typeof updates>
 
-   /* tracker of already shallow copied paths */
-   const alreadyShallowCopiedPaths: Tracker = {}
+   /* tracker of already shallow copied paths, null prototype so 'toString' or '__proto__' don't look copied */
+   const alreadyShallowCopiedPaths: Tracker = Object.create(null)
 
-   for (const [pathSeparatedByDots, newValueToUpdate] of Object.entries(updates)) {
+   nextUpdate: for (const [pathSeparatedByDots, newValueToUpdate] of Object.entries(updates)) {
 
       /* continue if path === '', cant be !path because 0 is a valid option */
       if (pathSeparatedByDots === '') continue
 
       /* setting up the keys, tracker and the current parent (all mutable)*/
       let pathKeys = pathSeparatedByDots.split(".")
+
+      /* '__proto__' would change the prototype of the copy instead of adding a prop */
+      if (pathKeys.includes('__proto__')) throw new Error(`"__proto__" is not allowed in "${pathSeparatedByDots}"`)
+
       let shallowCopiedPathsTracker = alreadyShallowCopiedPaths
 
       /* It has to be an object literal or array because of the previous lines */
@@ -47,9 +51,9 @@ const immutableImplementation: ImmutableImplementation = (state, updates, option
             break
          }
 
-         /* current key and its value to check */
+         /* current key and its value to check, own props only ({}.constructor is undefined here) */
          const currentKey = pathKeys[0]!
-         const valueInCurrentKey = currentParent[currentKey]
+         const valueInCurrentKey = Object.hasOwn(currentParent, currentKey) ? currentParent[currentKey] : undefined
 
          /* checking the type in "valueInCurrentKey" */
          const isCurrentValueAnObject = isObjectLiteral(valueInCurrentKey)
@@ -62,7 +66,7 @@ const immutableImplementation: ImmutableImplementation = (state, updates, option
 
          if (!isCurrentValueAnObject && !isCurrentValueAnArray && !isCurrentValueUndefined) {
             if (options.onPathsIntersectedByPrimitiveValues === 'error') throw new Error(`Property "${currentKey}" in "${pathSeparatedByDots}" is a primitive`)
-            if (options.onPathsIntersectedByPrimitiveValues === 'skip') continue
+            if (options.onPathsIntersectedByPrimitiveValues === 'skip') continue nextUpdate
          }
 
          /* checking if the current path has been already shallowCopied */
@@ -73,14 +77,14 @@ const immutableImplementation: ImmutableImplementation = (state, updates, option
                const isNextKeyAnIndex = isStringIndex(pathKeys[1]!)
                const optionBehaviour = isCurrentKeyAnIndex ? options.onNewIndexes : options.onNewProps
                if (optionBehaviour === 'error') throw new Error(`${currentKey} doesn't exist in "${pathSeparatedByDots}"`)
-               if (optionBehaviour === 'skip') continue
+               if (optionBehaviour === 'skip') continue nextUpdate
                currentParent[currentKey] = isNextKeyAnIndex ? [] : {}
             } else {
                /* shallow copying the current parent IN THE STATECOPY (declared above, because it's a reference) */
                currentParent[currentKey] = isCurrentValueAnArray ? [...valueInCurrentKey] : { ...valueInCurrentKey }
             }
             /* adding the current shallow copied path to the tracker */
-            shallowCopiedPathsTracker[currentKey] = {}
+            shallowCopiedPathsTracker[currentKey] = Object.create(null)
          }
 
          /* setting up the currentParent for the next iteration of currentKey */
@@ -97,15 +101,17 @@ const immutableImplementation: ImmutableImplementation = (state, updates, option
       const parentOfLastKey = currentParent
 
       /* behaviour on new properties/indexes */
-      if (!Object.hasOwn(parentOfLastKey, lastKeyWhereUpdateHappens)) {
+      const isNewKey = !Object.hasOwn(parentOfLastKey, lastKeyWhereUpdateHappens)
+      if (isNewKey) {
          const isCurrentKeyAnIndex = isArray(parentOfLastKey) && isStringIndex(lastKeyWhereUpdateHappens)
          const optionBehaviour = isCurrentKeyAnIndex ? options.onNewIndexes : options.onNewProps
          if (optionBehaviour === 'error') throw new Error(`Property/Index "${lastKeyWhereUpdateHappens}" doesnt exist in the path "${pathSeparatedByDots}". Its value is: "${toJson(parentOfLastKey)}"`)
          if (optionBehaviour === 'skip') continue
       }
 
-      /* setting the new value in the given path, if prop doesnt exist it will add it */
-      parentOfLastKey[lastKeyWhereUpdateHappens] = typeof newValueToUpdate === 'function' ? newValueToUpdate(parentOfLastKey[lastKeyWhereUpdateHappens]) : newValueToUpdate
+      /* setting the new value in the given path, if prop doesnt exist it will add it (functions get undefined) */
+      const currentValue = isNewKey ? undefined : parentOfLastKey[lastKeyWhereUpdateHappens]
+      parentOfLastKey[lastKeyWhereUpdateHappens] = typeof newValueToUpdate === 'function' ? newValueToUpdate(currentValue) : newValueToUpdate
 
       /* Need to delete where update happens in shallowCopiedPathsTracker because there may be a full object/array (lest
        call it "NewObjectValue") set as new value, and after this there may be another new update but inside its properties,
