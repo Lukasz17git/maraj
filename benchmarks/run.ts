@@ -169,7 +169,7 @@ npm run bench
 - 3.0.0 added two checks per path (\`'__proto__'\` and own props only), with no measurable cost against 2.11.0.
 - After 3.0.0, each level of a path costs less: the dotted-key check slices the path instead of joining
   the keys again (\`'a.b.c'\` -> \`'b.c'\` -> \`'c'\`), keys are read by index instead of \`shift()\`,
-  and paths already copied skip the type checks.
+  paths already copied skip the type checks, and an update with one path skips the tracker of copied paths.
 - Gaps under ~10% change sign from one run to the next on the same machine, so read them as noise.
 
 ${summaryTable(allResults)}
