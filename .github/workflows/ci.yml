@@ -33,6 +33,9 @@ jobs:
     # PRs from this repo already run on push, so only fork PRs run here
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.repository
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      statuses: write # reports the result to the "Version Packages" PR
     strategy:
       matrix:
         node-version: [22.x, 24.x]
@@ -45,6 +48,18 @@ jobs:
 
       - run: npm ci
       - run: npm run ci
+
+      # Posts the result as a commit status: a workflow_dispatch run's checks don't show on the PR
+      - name: Report to the PR
+        if: always() && github.event_name == 'workflow_dispatch'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          STATE: ${{ job.status == 'success' && 'success' || 'failure' }}
+          CONTEXT: ci (${{ matrix.node-version }})
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
+            -f state="$STATE" -f context="$CONTEXT" \
+            -f target_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
 
   # ------------------------------------------------------------
   # Release: Changesets version PR + npm publish
@@ -83,7 +98,7 @@ jobs:
           publish-script: npm run release
 
       # Pushes with GITHUB_TOKEN start no workflows, so the "Version Packages" PR would get no CI;
-      # workflow_dispatch is the exception, and its checks show on the PR's last commit
+      # workflow_dispatch is the exception, and the ci job reports its result to the PR
       - name: Run CI on the Version Packages PR
         if: steps.changesets.outputs.pr-number != ''
         env:
