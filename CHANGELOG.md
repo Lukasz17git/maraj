@@ -1,5 +1,11 @@
 # maraj
 
+## 3.0.1
+
+### Patch Changes
+
+- f5d4c90: Added Development and Releasing sections to the README: the scripts, how to run the benchmarks and how a release reaches npm (no code changes)
+
 ## 3.0.0
 
 ### Major Changes
