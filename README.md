@@ -247,3 +247,22 @@ immer                  ███████                         0.30x
 <!-- bench:end -->
 
 `1.50x` means 1.5 times as many updates per second as maraj. The scenarios go from one top-level prop to 100 paths in a 1,000-item array: see [benchmarks/README.md](benchmarks/README.md) for each one, the machine and how to run them.
+
+## Development
+
+| Script          | Does                                                 |
+| --------------- | ---------------------------------------------------- |
+| `npm run dev`   | Runs the tests in watch mode                         |
+| `npm test`      | Runs the tests once                                  |
+| `npm run lint`  | Type-checks with `tsc`                               |
+| `npm run trace` | Writes a `tsc` trace to `trace/`, to find slow types |
+| `npm run build` | Builds ESM + CJS and types to `dist`                 |
+| `npx changeset` | Adds a changeset for the next release                |
+
+The benchmarks have their own `package.json`: `cd benchmarks && npm install && npm run bench`.
+
+### Releasing
+
+1. Run `npx changeset`, pick the bump type and describe the change, and commit the generated file.
+2. When pushed to `main`, CI opens a "Version Packages" PR and runs the checks on it.
+3. Merging that PR publishes to npm with [trusted publishing](https://docs.npmjs.com/trusted-publishers) (no npm token needed).
