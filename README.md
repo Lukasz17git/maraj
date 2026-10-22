@@ -234,15 +234,15 @@ const updateField = <T, TPath extends DotPaths<T>>(state: T, path: TPath, newVal
 Median speed against maraj in 11 scenarios (higher is faster)
 
 ```text
-dot-prop-immutable     ██████████████████████████████  1.90x
-timm                   ███████████████████             1.21x
-maraj                  ████████████████                1.00x
-object-path-immutable  ███████████████                 0.96x
-immer (no autofreeze)  ███████████                     0.67x
-immutability-helper    █████████                       0.60x
-mutative               ████████                        0.53x
-immer                  ███████                         0.46x
-lodash/fp              ███████                         0.46x
+dot-prop-immutable     ██████████████████████████████  1.32x
+maraj                  ███████████████████████         1.00x
+timm                   ████████████████                0.71x
+object-path-immutable  ████████████                    0.54x
+immer (no autofreeze)  █████████                       0.42x
+mutative               ████████                        0.35x
+lodash/fp              ████████                        0.33x
+immutability-helper    ████████                        0.33x
+immer                  ██████                          0.24x
 ```
 <!-- bench:end -->
 

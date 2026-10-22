@@ -1,4 +1,4 @@
-import { UpdateObject, ExtendedUpdate, DotPaths } from "../../src/immutable/(immutable.types)";
+import { UpdateObject, ExtendedUpdate, DotPaths } from "../../../src/immutable/(immutable.types)";
 import { isObjectLiteral } from "./isObjectLiteral";
 import { isStringIndex } from "./stringIndex";
 

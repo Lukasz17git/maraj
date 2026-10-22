@@ -8,11 +8,13 @@ import fpSet from 'lodash/fp/set.js'
 import fpUpdate from 'lodash/fp/update.js'
 import * as timm from 'timm'
 import { update } from '../src/immutable/immutableImplementation'
-import { update as legacyUpdate } from './legacy/immutableImplementation'
+import { update as update3 } from './versions/3.0.0/immutableImplementation'
+import { update as update2 } from './versions/2.11.0/immutableImplementation'
 
 export const LIBRARIES = [
    'maraj',
-   'maraj (before fixes)',
+   'maraj 3.0.0',
+   'maraj 2.11.0',
    'spread by hand',
    'immer',
    'immer (no autofreeze)',
@@ -34,10 +36,11 @@ export type Scenario = {
 
 const immerWithoutFreeze = new Immer({ autoFreeze: false }).produce
 
-/* both maraj versions and both immer setups always run the same code */
+/* every maraj version and both immer setups always run the same code */
 const withMaraj = (updates, options?) => ({
    'maraj': (state) => update(state, updates, options),
-   'maraj (before fixes)': (state) => legacyUpdate(state, updates, options),
+   'maraj 3.0.0': (state) => update3(state, updates, options),
+   'maraj 2.11.0': (state) => update2(state, updates, options),
 })
 const withImmer = (recipe) => ({
    'immer': (state) => produce(state, recipe),

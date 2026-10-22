@@ -1,6 +1,6 @@
 # maraj benchmarks
 
-Speed of `update` against the code before the fixes ([legacy/](legacy/)) and against other immutable update libraries.
+Speed of `update` against its earlier versions ([versions/](versions/)) and against other immutable update libraries.
 This folder isn't published: the root `package.json` only ships `dist`, `README.md` and `LICENSE`,
 so none of these libraries are installed with maraj.
 
@@ -9,15 +9,15 @@ so none of these libraries are installed with maraj.
 Median speed against maraj in 11 scenarios (higher is faster)
 
 ```text
-dot-prop-immutable     ██████████████████████████████  1.90x
-timm                   ███████████████████             1.21x
-maraj                  ████████████████                1.00x
-object-path-immutable  ███████████████                 0.96x
-immer (no autofreeze)  ███████████                     0.67x
-immutability-helper    █████████                       0.60x
-mutative               ████████                        0.53x
-immer                  ███████                         0.46x
-lodash/fp              ███████                         0.46x
+dot-prop-immutable     ██████████████████████████████  1.32x
+maraj                  ███████████████████████         1.00x
+timm                   ████████████████                0.71x
+object-path-immutable  ████████████                    0.54x
+immer (no autofreeze)  █████████                       0.42x
+mutative               ████████                        0.35x
+lodash/fp              ████████                        0.33x
+immutability-helper    ████████                        0.33x
+immer                  ██████                          0.24x
 ```
 
 ## Run
@@ -45,25 +45,28 @@ npm run bench
 - AMD Ryzen AI 9 HX 370 w/ Radeon 890M, win32 x64, Node 22.22.2
 - immer 11.1.21, mutative 1.3.0, immutability-helper 3.1.1, object-path-immutable 4.1.2, dot-prop-immutable 2.1.1, lodash 4.18.1, timm 1.7.1, tinybench 6.2.1
 
-## maraj before vs after the fixes
+## maraj against 3.0.0 and 2.11.0
 
-The fixes add two checks per path (`'__proto__'` and own props only, with `Object.hasOwn`).
-Gaps under ~10% change sign from one run to the next on the same machine, so read them as noise.
+- 3.0.0 added two checks per path (`'__proto__'` and own props only), with no measurable cost against 2.11.0.
+- After 3.0.0, each level of a path costs less: the dotted-key check slices the path instead of joining
+  the keys again (`'a.b.c'` -> `'b.c'` -> `'c'`), keys are read by index instead of `shift()`,
+  and paths already copied skip the type checks.
+- Gaps under ~10% change sign from one run to the next on the same machine, so read them as noise.
 
-| Scenario | maraj ops/s | Before fixes ops/s | Change | Fastest other library (ops/s) |
-|---|---:|---:|---:|---|
-| Top-level prop | 4,308,796 | 4,140,238 | +4.1% | dot-prop-immutable (6,132,068) |
-| Nested prop (depth 3) | 1,238,407 | 1,167,290 | +6.1% | dot-prop-immutable (3,100,740) |
-| Deep prop (depth 11) | 289,235 | 309,126 | -6.4% | dot-prop-immutable (1,257,549) |
-| Item in a 1,000-item array | 720,515 | 761,469 | -5.4% | dot-prop-immutable (1,980,465) |
-| 5 updates at once | 419,372 | 417,096 | +0.5% | dot-prop-immutable (798,645) |
-| Function update | 1,117,590 | 1,100,291 | +1.6% | dot-prop-immutable (2,846,416) |
-| Append to a 1,000-item array | 706,018 | 699,500 | +0.9% | timm (1,586,218) |
-| Wide object (1,000 keys) | 7,963 | 7,583 | +5.0% | immer (no autofreeze) (8,403) |
-| 100 items in a 1,000-item array | 11,031 | 11,594 | -4.9% | timm (15,787) |
-| Create a missing path | 1,155,544 | 1,169,541 | -1.2% | dot-prop-immutable (4,002,306) |
-| Reducer action | 409,652 | 404,117 | +1.4% | dot-prop-immutable (772,422) |
-| Options set to 'error' | 414,143 | 418,777 | -1.1% | — |
+| Scenario | maraj ops/s | 3.0.0 ops/s | vs 3.0.0 | 2.11.0 ops/s | Fastest other library (ops/s) |
+|---|---:|---:|---:|---:|---|
+| Top-level prop | 4,595,716 | 4,601,907 | -0.1% | 4,343,236 | dot-prop-immutable (6,023,359) |
+| Nested prop (depth 3) | 2,230,374 | 1,339,680 | +66.5% | 1,330,240 | dot-prop-immutable (2,981,138) |
+| Deep prop (depth 11) | 644,099 | 308,188 | +109.0% | 312,810 | dot-prop-immutable (1,320,415) |
+| Item in a 1,000-item array | 1,033,302 | 759,214 | +36.1% | 781,008 | dot-prop-immutable (1,965,515) |
+| 5 updates at once | 837,765 | 440,416 | +90.2% | 452,938 | dot-prop-immutable (770,455) |
+| Function update | 1,929,741 | 1,225,264 | +57.5% | 1,161,867 | dot-prop-immutable (2,551,035) |
+| Append to a 1,000-item array | 757,075 | 750,494 | +0.9% | 651,246 | timm (1,648,401) |
+| Wide object (1,000 keys) | 7,156 | 6,480 | +10.4% | 6,858 | object-path-immutable (7,378) |
+| 100 items in a 1,000-item array | 16,835 | 12,408 | +35.7% | 11,136 | timm (16,045) |
+| Create a missing path | 2,209,028 | 1,241,095 | +78.0% | 1,144,693 | dot-prop-immutable (3,115,128) |
+| Reducer action | 314,354 | 214,355 | +46.7% | 228,422 | dot-prop-immutable (413,591) |
+| Options set to 'error' | 464,457 | 243,074 | +91.1% | 235,998 | — |
 
 ## All results
 
@@ -73,17 +76,18 @@ Sets `active` on a small user object.
 
 | Library | ops/s | Mean (µs) | Margin | vs maraj |
 |---|---:|---:|---:|---:|
-| spread by hand | 11,580,104 | 0.068 | ±4.38% | 2.69x faster |
-| dot-prop-immutable | 6,132,068 | 0.187 | ±0.30% | 1.42x faster |
-| **maraj** | 4,308,796 | 0.260 | ±1.51% | — |
-| maraj (before fixes) | 4,140,238 | 0.290 | ±12.52% | 1.04x slower |
-| timm | 3,197,055 | 0.342 | ±0.16% | 1.35x slower |
-| object-path-immutable | 2,370,940 | 0.462 | ±3.92% | 1.82x slower |
-| immutability-helper | 1,650,791 | 0.678 | ±2.16% | 2.61x slower |
-| lodash/fp | 1,534,571 | 0.706 | ±4.65% | 2.81x slower |
-| immer (no autofreeze) | 1,490,082 | 0.694 | ±0.63% | 2.89x slower |
-| mutative | 1,288,917 | 0.931 | ±5.35% | 3.34x slower |
-| immer | 1,100,846 | 0.975 | ±8.11% | 3.91x slower |
+| spread by hand | 11,845,916 | 0.067 | ±10.42% | 2.58x faster |
+| dot-prop-immutable | 6,023,359 | 0.194 | ±4.22% | 1.31x faster |
+| maraj 3.0.0 | 4,601,907 | 0.236 | ±1.23% | 1.00x faster |
+| **maraj** | 4,595,716 | 0.232 | ±0.26% | — |
+| maraj 2.11.0 | 4,343,236 | 0.250 | ±0.44% | 1.06x slower |
+| timm | 3,268,777 | 0.315 | ±0.12% | 1.41x slower |
+| object-path-immutable | 2,462,763 | 0.430 | ±1.46% | 1.87x slower |
+| immutability-helper | 1,615,148 | 0.683 | ±1.71% | 2.85x slower |
+| lodash/fp | 1,539,810 | 0.718 | ±9.07% | 2.98x slower |
+| immer (no autofreeze) | 1,387,251 | 0.759 | ±3.37% | 3.31x slower |
+| mutative | 1,291,205 | 0.869 | ±1.78% | 3.56x slower |
+| immer | 1,051,657 | 1.004 | ±4.11% | 4.37x slower |
 
 ### Nested prop (depth 3)
 
@@ -91,17 +95,18 @@ Sets `profile.address.city`.
 
 | Library | ops/s | Mean (µs) | Margin | vs maraj |
 |---|---:|---:|---:|---:|
-| spread by hand | 10,935,984 | 0.075 | ±1.58% | 8.83x faster |
-| dot-prop-immutable | 3,100,740 | 0.369 | ±1.90% | 2.50x faster |
-| timm | 1,494,760 | 0.702 | ±2.24% | 1.21x faster |
-| **maraj** | 1,238,407 | 0.831 | ±0.29% | — |
-| maraj (before fixes) | 1,167,290 | 0.887 | ±0.13% | 1.06x slower |
-| object-path-immutable | 1,153,318 | 0.949 | ±1.71% | 1.07x slower |
-| immer (no autofreeze) | 833,063 | 1.298 | ±1.35% | 1.49x slower |
-| immutability-helper | 826,336 | 1.332 | ±1.69% | 1.50x slower |
-| lodash/fp | 746,144 | 1.403 | ±4.34% | 1.66x slower |
-| immer | 575,250 | 1.964 | ±7.09% | 2.15x slower |
-| mutative | 563,253 | 1.873 | ±2.87% | 2.20x slower |
+| spread by hand | 10,826,841 | 0.076 | ±2.25% | 4.85x faster |
+| dot-prop-immutable | 2,981,138 | 0.406 | ±3.02% | 1.34x faster |
+| **maraj** | 2,230,374 | 0.485 | ±0.93% | — |
+| timm | 1,511,653 | 0.690 | ±1.52% | 1.48x slower |
+| maraj 3.0.0 | 1,339,680 | 0.785 | ±0.85% | 1.66x slower |
+| maraj 2.11.0 | 1,330,240 | 0.773 | ±0.29% | 1.68x slower |
+| object-path-immutable | 1,079,885 | 1.008 | ±1.47% | 2.07x slower |
+| immutability-helper | 781,946 | 1.415 | ±2.38% | 2.85x slower |
+| immer (no autofreeze) | 746,214 | 1.500 | ±1.71% | 2.99x slower |
+| lodash/fp | 738,175 | 1.395 | ±0.16% | 3.02x slower |
+| immer | 535,505 | 2.173 | ±5.26% | 4.16x slower |
+| mutative | 523,021 | 2.111 | ±1.73% | 4.26x slower |
 
 ### Deep prop (depth 11)
 
@@ -109,17 +114,18 @@ Sets `level1.level2…level10.value`, every level has a sibling object.
 
 | Library | ops/s | Mean (µs) | Margin | vs maraj |
 |---|---:|---:|---:|---:|
-| dot-prop-immutable | 1,257,549 | 0.855 | ±1.04% | 4.35x faster |
-| spread by hand | 758,460 | 1.389 | ±0.72% | 2.62x faster |
-| timm | 373,361 | 3.149 | ±2.05% | 1.29x faster |
-| object-path-immutable | 346,614 | 2.982 | ±0.62% | 1.20x faster |
-| immer (no autofreeze) | 310,248 | 3.454 | ±0.91% | 1.07x faster |
-| maraj (before fixes) | 309,126 | 3.381 | ±1.02% | 1.07x faster |
-| immutability-helper | 304,268 | 3.695 | ±1.61% | 1.05x faster |
-| **maraj** | 289,235 | 3.638 | ±0.60% | — |
-| lodash/fp | 249,690 | 4.307 | ±0.83% | 1.16x slower |
-| immer | 215,899 | 4.891 | ±0.86% | 1.34x slower |
-| mutative | 170,998 | 6.750 | ±1.34% | 1.69x slower |
+| dot-prop-immutable | 1,320,415 | 0.792 | ±0.96% | 2.05x faster |
+| spread by hand | 757,984 | 1.413 | ±1.21% | 1.18x faster |
+| **maraj** | 644,099 | 1.603 | ±0.52% | — |
+| timm | 452,909 | 2.303 | ±0.66% | 1.42x slower |
+| object-path-immutable | 344,140 | 2.999 | ±0.44% | 1.87x slower |
+| immutability-helper | 338,709 | 3.072 | ±0.62% | 1.90x slower |
+| maraj 2.11.0 | 312,810 | 3.362 | ±1.54% | 2.06x slower |
+| immer (no autofreeze) | 310,785 | 3.402 | ±1.10% | 2.07x slower |
+| maraj 3.0.0 | 308,188 | 3.401 | ±1.79% | 2.09x slower |
+| lodash/fp | 265,496 | 3.914 | ±0.58% | 2.43x slower |
+| immer | 214,020 | 4.897 | ±1.83% | 3.01x slower |
+| mutative | 186,663 | 5.613 | ±0.68% | 3.45x slower |
 
 ### Item in a 1,000-item array
 
@@ -127,17 +133,18 @@ Sets `items.500.done`.
 
 | Library | ops/s | Mean (µs) | Margin | vs maraj |
 |---|---:|---:|---:|---:|
-| spread by hand | 5,225,181 | 0.303 | ±2.05% | 7.25x faster |
-| dot-prop-immutable | 1,980,465 | 0.645 | ±1.41% | 2.75x faster |
-| timm | 1,427,356 | 0.836 | ±1.62% | 1.98x faster |
-| object-path-immutable | 990,292 | 1.136 | ±0.94% | 1.37x faster |
-| maraj (before fixes) | 761,469 | 1.463 | ±0.93% | 1.06x faster |
-| **maraj** | 720,515 | 1.572 | ±1.00% | — |
-| immer (no autofreeze) | 535,042 | 2.069 | ±0.99% | 1.35x slower |
-| mutative | 442,908 | 2.421 | ±0.85% | 1.63x slower |
-| lodash/fp | 361,918 | 2.995 | ±3.83% | 1.99x slower |
-| immer | 23,752 | 43.250 | ±0.62% | 30.33x slower |
-| immutability-helper | 8,856 | 114.916 | ±0.68% | 81.36x slower |
+| spread by hand | 4,845,628 | 0.342 | ±2.82% | 4.69x faster |
+| dot-prop-immutable | 1,965,515 | 0.642 | ±1.28% | 1.90x faster |
+| timm | 1,424,099 | 0.815 | ±1.70% | 1.38x faster |
+| **maraj** | 1,033,302 | 1.119 | ±1.45% | — |
+| object-path-immutable | 1,024,178 | 1.063 | ±0.76% | 1.01x slower |
+| maraj 2.11.0 | 781,008 | 1.472 | ±3.40% | 1.32x slower |
+| maraj 3.0.0 | 759,214 | 1.559 | ±2.76% | 1.36x slower |
+| immer (no autofreeze) | 520,163 | 2.077 | ±0.85% | 1.99x slower |
+| mutative | 435,423 | 2.442 | ±0.77% | 2.37x slower |
+| lodash/fp | 346,616 | 3.149 | ±4.22% | 2.98x slower |
+| immer | 22,931 | 48.601 | ±9.14% | 45.06x slower |
+| immutability-helper | 8,863 | 115.426 | ±0.72% | 116.59x slower |
 
 ### 5 updates at once
 
@@ -145,17 +152,18 @@ Sets `name`, `profile.address.city`, `profile.address.zip`, `profile.tags.0` and
 
 | Library | ops/s | Mean (µs) | Margin | vs maraj |
 |---|---:|---:|---:|---:|
-| spread by hand | 9,804,405 | 0.099 | ±0.61% | 23.38x faster |
-| dot-prop-immutable | 798,645 | 1.321 | ±0.79% | 1.90x faster |
-| **maraj** | 419,372 | 2.542 | ±4.11% | — |
-| maraj (before fixes) | 417,096 | 2.456 | ±0.20% | 1.01x slower |
-| timm | 400,339 | 2.636 | ±0.84% | 1.05x slower |
-| object-path-immutable | 280,865 | 3.718 | ±1.68% | 1.49x slower |
-| immer (no autofreeze) | 268,088 | 3.916 | ±0.89% | 1.56x slower |
-| immutability-helper | 262,046 | 3.897 | ±0.72% | 1.60x slower |
-| immer | 224,467 | 4.841 | ±6.95% | 1.87x slower |
-| mutative | 220,238 | 4.733 | ±0.73% | 1.90x slower |
-| lodash/fp | 179,261 | 5.827 | ±0.90% | 2.34x slower |
+| spread by hand | 9,626,926 | 0.103 | ±1.38% | 11.49x faster |
+| **maraj** | 837,765 | 1.260 | ±0.66% | — |
+| dot-prop-immutable | 770,455 | 1.433 | ±1.64% | 1.09x slower |
+| maraj 2.11.0 | 452,938 | 2.334 | ±0.63% | 1.85x slower |
+| maraj 3.0.0 | 440,416 | 2.404 | ±1.02% | 1.90x slower |
+| timm | 408,982 | 2.605 | ±1.39% | 2.05x slower |
+| object-path-immutable | 279,135 | 3.779 | ±1.63% | 3.00x slower |
+| immutability-helper | 258,446 | 4.029 | ±1.16% | 3.24x slower |
+| immer (no autofreeze) | 249,686 | 4.302 | ±1.17% | 3.36x slower |
+| mutative | 222,503 | 4.828 | ±2.30% | 3.77x slower |
+| immer | 214,492 | 5.378 | ±11.87% | 3.91x slower |
+| lodash/fp | 176,260 | 6.045 | ±1.17% | 4.75x slower |
 
 ### Function update
 
@@ -163,17 +171,18 @@ Uppercases `profile.address.city` with a function of the current value.
 
 | Library | ops/s | Mean (µs) | Margin | vs maraj |
 |---|---:|---:|---:|---:|
-| spread by hand | 9,818,981 | 0.101 | ±0.43% | 8.79x faster |
-| dot-prop-immutable | 2,846,416 | 0.406 | ±3.60% | 2.55x faster |
-| timm | 1,326,823 | 0.793 | ±0.92% | 1.19x faster |
-| object-path-immutable | 1,126,445 | 0.950 | ±2.09% | 1.01x faster |
-| **maraj** | 1,117,590 | 0.944 | ±0.59% | — |
-| maraj (before fixes) | 1,100,291 | 0.947 | ±0.56% | 1.02x slower |
-| immutability-helper | 639,367 | 1.708 | ±1.98% | 1.75x slower |
-| lodash/fp | 635,373 | 1.737 | ±3.53% | 1.76x slower |
-| immer (no autofreeze) | 622,224 | 1.677 | ±1.26% | 1.80x slower |
-| immer | 450,221 | 2.553 | ±11.62% | 2.48x slower |
-| mutative | 417,050 | 2.628 | ±1.50% | 2.68x slower |
+| spread by hand | 9,639,345 | 0.107 | ±0.54% | 5.00x faster |
+| dot-prop-immutable | 2,551,035 | 0.469 | ±3.15% | 1.32x faster |
+| **maraj** | 1,929,741 | 0.551 | ±0.27% | — |
+| timm | 1,284,685 | 0.814 | ±0.52% | 1.50x slower |
+| maraj 3.0.0 | 1,225,264 | 0.908 | ±4.81% | 1.57x slower |
+| maraj 2.11.0 | 1,161,867 | 0.921 | ±1.58% | 1.66x slower |
+| object-path-immutable | 1,054,545 | 1.017 | ±1.11% | 1.83x slower |
+| immutability-helper | 596,469 | 1.784 | ±0.99% | 3.24x slower |
+| immer (no autofreeze) | 590,680 | 1.768 | ±0.40% | 3.27x slower |
+| lodash/fp | 585,466 | 1.839 | ±0.84% | 3.30x slower |
+| immer | 470,875 | 2.333 | ±7.28% | 4.10x slower |
+| mutative | 410,761 | 2.593 | ±1.08% | 4.70x slower |
 
 ### Append to a 1,000-item array
 
@@ -181,17 +190,18 @@ Adds one item at the end of `items`.
 
 | Library | ops/s | Mean (µs) | Margin | vs maraj |
 |---|---:|---:|---:|---:|
-| timm | 1,586,218 | 0.768 | ±2.33% | 2.25x faster |
-| immutability-helper | 1,072,696 | 1.075 | ±2.13% | 1.52x faster |
-| object-path-immutable | 968,882 | 1.365 | ±3.35% | 1.37x faster |
-| spread by hand | 813,274 | 1.434 | ±1.18% | 1.15x faster |
-| **maraj** | 706,018 | 1.668 | ±1.28% | — |
-| maraj (before fixes) | 699,500 | 1.685 | ±2.95% | 1.01x slower |
-| dot-prop-immutable | 694,288 | 1.722 | ±1.15% | 1.02x slower |
-| mutative | 314,603 | 3.457 | ±1.19% | 2.24x slower |
-| immer (no autofreeze) | 288,376 | 3.705 | ±0.77% | 2.45x slower |
-| lodash/fp | 240,280 | 4.575 | ±2.54% | 2.94x slower |
-| immer | 22,190 | 46.652 | ±0.71% | 31.82x slower |
+| timm | 1,648,401 | 0.745 | ±1.61% | 2.18x faster |
+| object-path-immutable | 1,260,877 | 0.891 | ±0.97% | 1.67x faster |
+| immutability-helper | 1,095,087 | 1.039 | ±1.57% | 1.45x faster |
+| spread by hand | 855,436 | 1.358 | ±2.55% | 1.13x faster |
+| dot-prop-immutable | 772,905 | 1.494 | ±3.30% | 1.02x faster |
+| **maraj** | 757,075 | 1.486 | ±0.84% | — |
+| maraj 3.0.0 | 750,494 | 1.531 | ±2.36% | 1.01x slower |
+| maraj 2.11.0 | 651,246 | 1.845 | ±1.43% | 1.16x slower |
+| mutative | 315,741 | 3.445 | ±1.20% | 2.40x slower |
+| immer (no autofreeze) | 281,445 | 3.798 | ±0.75% | 2.69x slower |
+| lodash/fp | 252,763 | 4.274 | ±0.81% | 3.00x slower |
+| immer | 21,498 | 48.272 | ±0.73% | 35.22x slower |
 
 ### Wide object (1,000 keys)
 
@@ -199,17 +209,18 @@ Sets `key500.index` in an object with 1,000 top-level keys.
 
 | Library | ops/s | Mean (µs) | Margin | vs maraj |
 |---|---:|---:|---:|---:|
-| spread by hand | 873,817 | 1.255 | ±0.93% | 109.73x faster |
-| immer (no autofreeze) | 8,403 | 124.684 | ±0.89% | 1.06x faster |
-| **maraj** | 7,963 | 132.412 | ±1.00% | — |
-| object-path-immutable | 7,670 | 139.370 | ±1.20% | 1.04x slower |
-| immutability-helper | 7,584 | 138.072 | ±0.92% | 1.05x slower |
-| maraj (before fixes) | 7,583 | 139.445 | ±1.04% | 1.05x slower |
-| dot-prop-immutable | 7,294 | 144.068 | ±0.98% | 1.09x slower |
-| mutative | 7,053 | 150.332 | ±1.14% | 1.13x slower |
-| immer | 6,301 | 167.935 | ±2.43% | 1.26x slower |
-| timm | 6,213 | 174.322 | ±1.41% | 1.28x slower |
-| lodash/fp | 2,926 | 353.243 | ±1.15% | 2.72x slower |
+| spread by hand | 839,934 | 1.305 | ±0.95% | 117.38x faster |
+| object-path-immutable | 7,378 | 141.225 | ±0.86% | 1.03x faster |
+| **maraj** | 7,156 | 147.474 | ±1.03% | — |
+| immer (no autofreeze) | 7,032 | 149.726 | ±1.02% | 1.02x slower |
+| dot-prop-immutable | 6,898 | 151.397 | ±0.91% | 1.04x slower |
+| maraj 2.11.0 | 6,858 | 156.011 | ±1.29% | 1.04x slower |
+| immutability-helper | 6,575 | 162.377 | ±1.20% | 1.09x slower |
+| maraj 3.0.0 | 6,480 | 168.453 | ±1.51% | 1.10x slower |
+| timm | 6,339 | 168.924 | ±1.28% | 1.13x slower |
+| mutative | 5,763 | 190.758 | ±1.67% | 1.24x slower |
+| immer | 5,538 | 189.603 | ±1.07% | 1.29x slower |
+| lodash/fp | 2,755 | 375.109 | ±1.21% | 2.60x slower |
 
 ### 100 items in a 1,000-item array
 
@@ -217,17 +228,18 @@ Sets `done` on every 10th item in one call; one-path libraries chain 100 calls.
 
 | Library | ops/s | Mean (µs) | Margin | vs maraj |
 |---|---:|---:|---:|---:|
-| spread by hand | 766,380 | 1.519 | ±1.29% | 69.48x faster |
-| timm | 15,787 | 69.629 | ±1.15% | 1.43x faster |
-| dot-prop-immutable | 12,824 | 84.383 | ±1.15% | 1.16x faster |
-| maraj (before fixes) | 11,594 | 89.567 | ±0.92% | 1.05x faster |
-| immer (no autofreeze) | 11,339 | 91.609 | ±0.94% | 1.03x faster |
-| **maraj** | 11,031 | 94.448 | ±0.99% | — |
-| mutative | 10,519 | 98.532 | ±0.93% | 1.05x slower |
-| object-path-immutable | 7,814 | 134.293 | ±1.07% | 1.41x slower |
-| immer | 7,255 | 141.873 | ±0.97% | 1.52x slower |
-| immutability-helper | 5,804 | 179.654 | ±1.06% | 1.90x slower |
-| lodash/fp | 3,569 | 289.364 | ±1.09% | 3.09x slower |
+| spread by hand | 762,289 | 1.441 | ±0.83% | 45.28x faster |
+| **maraj** | 16,835 | 61.464 | ±0.80% | — |
+| timm | 16,045 | 67.219 | ±0.98% | 1.05x slower |
+| maraj 3.0.0 | 12,408 | 84.122 | ±0.96% | 1.36x slower |
+| dot-prop-immutable | 12,372 | 87.559 | ±1.08% | 1.36x slower |
+| immer (no autofreeze) | 11,193 | 92.094 | ±0.84% | 1.50x slower |
+| maraj 2.11.0 | 11,136 | 95.296 | ±1.00% | 1.51x slower |
+| mutative | 10,230 | 102.746 | ±0.99% | 1.65x slower |
+| object-path-immutable | 7,362 | 146.399 | ±1.36% | 2.29x slower |
+| immer | 6,960 | 147.235 | ±0.84% | 2.42x slower |
+| immutability-helper | 5,251 | 203.214 | ±1.26% | 3.21x slower |
+| lodash/fp | 3,588 | 284.120 | ±0.84% | 4.69x slower |
 
 ### Create a missing path
 
@@ -235,16 +247,17 @@ Sets `address.location.city` on a user without `address`.
 
 | Library | ops/s | Mean (µs) | Margin | vs maraj |
 |---|---:|---:|---:|---:|
-| spread by hand | 10,907,946 | 0.075 | ±0.53% | 9.44x faster |
-| dot-prop-immutable | 4,002,306 | 0.264 | ±0.19% | 3.46x faster |
-| timm | 2,170,756 | 0.485 | ±0.65% | 1.88x faster |
-| object-path-immutable | 1,299,805 | 0.805 | ±1.03% | 1.12x faster |
-| lodash/fp | 1,298,670 | 0.863 | ±6.71% | 1.12x faster |
-| maraj (before fixes) | 1,169,541 | 0.901 | ±3.23% | 1.01x faster |
-| **maraj** | 1,155,544 | 0.904 | ±0.26% | — |
-| immer (no autofreeze) | 1,127,546 | 0.960 | ±1.20% | 1.02x slower |
-| mutative | 936,639 | 1.113 | ±0.62% | 1.23x slower |
-| immer | 760,368 | 1.496 | ±8.12% | 1.52x slower |
+| spread by hand | 10,636,256 | 0.080 | ±5.08% | 4.81x faster |
+| dot-prop-immutable | 3,115,128 | 0.334 | ±0.30% | 1.41x faster |
+| **maraj** | 2,209,028 | 0.485 | ±0.75% | — |
+| timm | 1,859,337 | 0.591 | ±2.80% | 1.19x slower |
+| maraj 3.0.0 | 1,241,095 | 0.867 | ±0.32% | 1.78x slower |
+| object-path-immutable | 1,165,153 | 0.910 | ±0.62% | 1.90x slower |
+| maraj 2.11.0 | 1,144,693 | 0.969 | ±1.56% | 1.93x slower |
+| lodash/fp | 1,045,730 | 1.121 | ±3.91% | 2.11x slower |
+| immer (no autofreeze) | 919,181 | 1.204 | ±0.91% | 2.40x slower |
+| mutative | 782,260 | 1.438 | ±1.02% | 2.82x slower |
+| immer | 682,451 | 1.666 | ±6.63% | 3.24x slower |
 
 ### Reducer action
 
@@ -252,17 +265,18 @@ Toggles `todos.42.done` (100 todos) and renames `users.byId.u7` (50 users), like
 
 | Library | ops/s | Mean (µs) | Margin | vs maraj |
 |---|---:|---:|---:|---:|
-| spread by hand | 7,325,078 | 0.183 | ±2.32% | 17.88x faster |
-| dot-prop-immutable | 772,422 | 1.416 | ±1.10% | 1.89x faster |
-| **maraj** | 409,652 | 2.562 | ±0.70% | — |
-| maraj (before fixes) | 404,117 | 2.645 | ±1.86% | 1.01x slower |
-| object-path-immutable | 389,164 | 2.720 | ±0.90% | 1.05x slower |
-| timm | 383,745 | 2.792 | ±1.09% | 1.07x slower |
-| immer (no autofreeze) | 263,023 | 4.021 | ±0.88% | 1.56x slower |
-| lodash/fp | 187,913 | 5.580 | ±0.94% | 2.18x slower |
-| mutative | 174,413 | 6.126 | ±1.27% | 2.35x slower |
-| immer | 98,085 | 10.729 | ±0.95% | 4.18x slower |
-| immutability-helper | 62,811 | 16.594 | ±0.73% | 6.52x slower |
+| spread by hand | 4,007,167 | 0.360 | ±3.17% | 12.75x faster |
+| dot-prop-immutable | 413,591 | 2.937 | ±2.28% | 1.32x faster |
+| **maraj** | 314,354 | 3.951 | ±2.04% | — |
+| object-path-immutable | 234,531 | 4.939 | ±1.13% | 1.34x slower |
+| maraj 2.11.0 | 228,422 | 5.215 | ±2.32% | 1.38x slower |
+| maraj 3.0.0 | 214,355 | 5.379 | ±3.01% | 1.47x slower |
+| timm | 183,900 | 6.438 | ±4.10% | 1.71x slower |
+| immer (no autofreeze) | 162,418 | 6.934 | ±1.12% | 1.94x slower |
+| mutative | 110,475 | 9.754 | ±0.67% | 2.85x slower |
+| lodash/fp | 90,285 | 12.599 | ±1.57% | 3.48x slower |
+| immer | 56,267 | 19.887 | ±1.19% | 5.59x slower |
+| immutability-helper | 41,654 | 25.555 | ±1.18% | 7.55x slower |
 
 ### Options set to 'error'
 
@@ -270,5 +284,6 @@ Same as "5 updates at once" with `onNewProps` and `onNewIndexes` set to `'error'
 
 | Library | ops/s | Mean (µs) | Margin | vs maraj |
 |---|---:|---:|---:|---:|
-| maraj (before fixes) | 418,777 | 2.486 | ±1.56% | 1.01x faster |
-| **maraj** | 414,143 | 2.520 | ±0.83% | — |
+| **maraj** | 464,457 | 2.539 | ±1.90% | — |
+| maraj 3.0.0 | 243,074 | 4.853 | ±3.05% | 1.91x slower |
+| maraj 2.11.0 | 235,998 | 4.698 | ±1.55% | 1.97x slower |

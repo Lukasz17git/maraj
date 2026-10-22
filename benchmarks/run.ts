@@ -63,20 +63,22 @@ const scenarioTable = (scenario, results) => {
    ].join('\n')
 }
 
+const formatChange = (now, before) => `${now >= before ? '+' : ''}${((now / before - 1) * 100).toFixed(1)}%`
+
 const summaryTable = (allResults) => {
    const rows = SCENARIOS.map((scenario, i) => {
       const results = allResults[i]
       const now = results['maraj'].ops
-      const before = results['maraj (before fixes)'].ops
+      const v3 = results['maraj 3.0.0'].ops
+      const v2 = results['maraj 2.11.0'].ops
       const others = Object.entries(results).filter(([library]) => !library.startsWith('maraj') && library !== 'spread by hand')
       const fastest = others.sort(([, a], [, b]) => b.ops - a.ops)[0]
-      const change = `${now >= before ? '+' : ''}${((now / before - 1) * 100).toFixed(1)}%`
       const fastestCell = fastest ? `${fastest[0]} (${formatOps(fastest[1].ops)})` : '—'
-      return `| ${scenario.name} | ${formatOps(now)} | ${formatOps(before)} | ${change} | ${fastestCell} |`
+      return `| ${scenario.name} | ${formatOps(now)} | ${formatOps(v3)} | ${formatChange(now, v3)} | ${formatOps(v2)} | ${fastestCell} |`
    })
    return [
-      '| Scenario | maraj ops/s | Before fixes ops/s | Change | Fastest other library (ops/s) |',
-      '|---|---:|---:|---:|---|',
+      '| Scenario | maraj ops/s | 3.0.0 ops/s | vs 3.0.0 | 2.11.0 ops/s | Fastest other library (ops/s) |',
+      '|---|---:|---:|---:|---:|---|',
       ...rows,
    ].join('\n')
 }
@@ -88,10 +90,10 @@ const median = (values) => {
 }
 
 /* bar chart of each library's median speed against maraj, over the scenarios every library can run */
-const SHORT_CHART_SKIPS = ['maraj (before fixes)', 'spread by hand']
+const SHORT_CHART_SKIPS = ['maraj 3.0.0', 'maraj 2.11.0', 'spread by hand']
 const BAR_WIDTH = 30
 const shortChart = (allResults) => {
-   const shared = allResults.filter((results) => Object.keys(results).length > 2)
+   const shared = allResults.filter((results) => results['spread by hand'])
    const libraries = LIBRARIES.filter((library) => !SHORT_CHART_SKIPS.includes(library))
    const speeds = libraries
       .map((library) => {
@@ -129,7 +131,7 @@ const updateRootReadme = (allResults) => {
 
 const readme = (allResults) => `# maraj benchmarks
 
-Speed of \`update\` against the code before the fixes ([legacy/](legacy/)) and against other immutable update libraries.
+Speed of \`update\` against its earlier versions ([versions/](versions/)) and against other immutable update libraries.
 This folder isn't published: the root \`package.json\` only ships \`dist\`, \`README.md\` and \`LICENSE\`,
 so none of these libraries are installed with maraj.
 
@@ -162,10 +164,13 @@ npm run bench
 - ${cpus()[0].model.trim()}, ${platform()} ${arch()}, Node ${process.versions.node}
 - ${PACKAGES.map((name) => `${name} ${version(name)}`).join(', ')}
 
-## maraj before vs after the fixes
+## maraj against 3.0.0 and 2.11.0
 
-The fixes add two checks per path (\`'__proto__'\` and own props only, with \`Object.hasOwn\`).
-Gaps under ~10% change sign from one run to the next on the same machine, so read them as noise.
+- 3.0.0 added two checks per path (\`'__proto__'\` and own props only), with no measurable cost against 2.11.0.
+- After 3.0.0, each level of a path costs less: the dotted-key check slices the path instead of joining
+  the keys again (\`'a.b.c'\` -> \`'b.c'\` -> \`'c'\`), keys are read by index instead of \`shift()\`,
+  and paths already copied skip the type checks.
+- Gaps under ~10% change sign from one run to the next on the same machine, so read them as noise.
 
 ${summaryTable(allResults)}
 

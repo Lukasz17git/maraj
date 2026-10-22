@@ -1,4 +1,4 @@
-import { ObjectLiteral } from "../../src/strictness/(strictness.types)"
+import { ObjectLiteral } from "../../../src/strictness/(strictness.types)"
 
 
 /** Checks if any provided value is an object literal or not */
