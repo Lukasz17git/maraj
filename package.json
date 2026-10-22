@@ -21,7 +21,7 @@
    "scripts": {
       "dev": "vitest",
       "test": "vitest run",
-      "build": "tsup src/index.ts --minify --format cjs,esm --dts",
+      "build": "tsdown",
       "lint": "tsc",
       "trace": "tsc --generateTrace trace",
       "ci": "npm run lint && npm run test && npm run build",
@@ -37,10 +37,10 @@
    "homepage": "https://github.com/Lukasz17git/maraj#readme",
    "devDependencies": {
       "@changesets/cli": "^3.0.3",
-      "@microsoft/api-extractor": "^7.38.5",
-      "@typescript/analyze-trace": "^0.10.1",
-      "tsup": "^8.0.1",
-      "typescript": "^5.3.3",
-      "vitest": "^0.28.4"
+      "@microsoft/api-extractor": "^7.59.4",
+      "@typescript/analyze-trace": "^0.11.1",
+      "tsdown": "^0.23.1",
+      "typescript": "^7.0.2",
+      "vitest": "^5.0.5"
    }
 }

@@ -23,6 +23,8 @@ export const select: Select = <T extends Record<PropertyKey, any>, P extends Dot
    const splittedPath = path.split('.')
    let currentValue = state
    while (splittedPath.length) {
+      /* 'manager.name' with manager: null -> undefined, Object.hasOwn would throw */
+      if (currentValue === null || currentValue === undefined) return undefined
       const currentKey = splittedPath[0]!
       const possibleDotPathKey = splittedPath.join('.')
       if (Object.hasOwn(currentValue, possibleDotPathKey)) return currentValue[possibleDotPathKey]

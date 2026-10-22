@@ -33,6 +33,13 @@ describe("select test", () => {
       expect(select(objectExample, 'data.arrayExample.0.$$non_existent_prop')).toBe(undefined)
    })
 
+   it('should return undefined if an object in the path is null or undefined', () => {
+      expect(select({ manager: null }, 'manager.name')).toBe(undefined)
+      expect(select({ manager: undefined }, 'manager.name')).toBe(undefined)
+      expect(select({ a: { b: undefined } }, 'a.b.c.d')).toBe(undefined)
+      expect(select({ manager: null }, 'manager')).toBe(null)
+   })
+
    it('should return the value in the path', () => {
       expect(select(objectExample, 'data')).toBe(objectExample.data)
       expect(select(objectExample, 'data.arrayExample')).toBe(objectExample.data.arrayExample)

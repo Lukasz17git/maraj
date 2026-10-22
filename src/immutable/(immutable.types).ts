@@ -20,15 +20,15 @@ type ObjectPaths<T, TAllowedTypes> = {
    ? `${Key}`
    : `${Key}` | `${Key}.${DotPathsImplementation<T[Key], TAllowedTypes>}`
    : `${Key}.${DotPathsImplementation<T[Key], TAllowedTypes>}`
-}[keyof T & (string | number)] & {} //TODO: Need to check if (& {}) works properly
+}[keyof T & (string | number)]
 
 /** Dot-paths of a tuple. */
-type TuplePaths<T, TAllowedTypes> = ObjectPaths<Omit<T, keyof any[]>, TAllowedTypes> & {} //TODO: Need to check if (& {}) works properly
+type TuplePaths<T, TAllowedTypes> = ObjectPaths<Required<Omit<T, keyof any[]>>, TAllowedTypes>
 
-/** Dot-paths implementation */
+/** Dot-paths implementation, Required<T> so optional props count as their type ('nickname?: string' is a string) */
 type DotPathsImplementation<T, TAllowedTypes = any> = T extends ReadonlyArray<infer U> ?
    T extends Tuple ? TuplePaths<T, TAllowedTypes> : ArrayPaths<U, TAllowedTypes>
-   : T extends PrimitivesAndNativeObjects ? never : ObjectPaths<T, TAllowedTypes>
+   : T extends PrimitivesAndNativeObjects ? never : ObjectPaths<Required<T>, TAllowedTypes>
 
 /** Literal union of all posible dot-paths which satisfy provided types as second argument (default: any). */
 export type DotPaths<T, TAllowedTypes = any> = KeyOf<T, TAllowedTypes> | DotPathsImplementation<T, TAllowedTypes>
@@ -40,17 +40,20 @@ export type DotPaths<T, TAllowedTypes = any> = KeyOf<T, TAllowedTypes> | DotPath
  * --------------------------------------------
  */
 
-/** Nested type implementation. */
-export type ValueInPath<TObject, TPath> =
+/** Tuple without rest items ([number, string], not [string, ...number[]]): an index that isn't a key is out of range. */
+type IsFixedTuple<T> = T extends Tuple ? number extends T['length'] ? false : true : false
+
+/** Nested type implementation, goes into each object of a union ({ name } | null -> 'name' is string). */
+export type ValueInPath<TObject, TPath> = TObject extends unknown ?
    TPath extends keyof TObject ? TObject[TPath] :
    TPath extends '' ? TObject :
    TPath extends LiteralIndex ? never :
-   TPath extends `${number}` ? TObject extends ReadonlyArray<infer U> ? U : never :
+   TPath extends `${number}` ? IsFixedTuple<TObject> extends true ? never : TObject extends ReadonlyArray<infer U> ? U : never :
    TPath extends `${infer K}.${infer R}` ?
    K extends keyof TObject ? ValueInPath<TObject[K], R> :
    K extends LiteralIndex ? never :
-   K extends `${number}` ? TObject extends ReadonlyArray<infer U> ? ValueInPath<U, R> : never :
-   never : never
+   K extends `${number}` ? IsFixedTuple<TObject> extends true ? never : TObject extends ReadonlyArray<infer U> ? ValueInPath<U, R> : never :
+   never : never : never
 
 
 /**
@@ -59,16 +62,17 @@ export type ValueInPath<TObject, TPath> =
  * --------------------------------------------
  */
 
-/** Returned nested type implementation. */
+/** Returned nested type implementation, null or undefined inside the path -> undefined. */
 export type ReturnedValueInPath<TObject, TPath> =
    TPath extends '' ? TObject :
+   TObject extends null | undefined ? undefined :
    TPath extends keyof TObject ? TPath extends number ? TObject extends ReadonlyArray<infer U> ? (U | undefined) : TObject[TPath] : TObject[TPath] :
-   TPath extends `${number}` ? TObject extends ReadonlyArray<infer U> ? (U | undefined) : never :
+   TPath extends `${number}` ? IsFixedTuple<TObject> extends true ? never : TObject extends ReadonlyArray<infer U> ? (U | undefined) : never :
    TPath extends LiteralIndex ? never :
    TPath extends `${infer K}.${infer R}` ?
    K extends keyof TObject ? ReturnedValueInPath<TObject[K], R> :
    K extends LiteralIndex ? never :
-   K extends `${number}` ? TObject extends ReadonlyArray<infer U> ? (ReturnedValueInPath<U, R> | undefined) : never : never : never
+   K extends `${number}` ? IsFixedTuple<TObject> extends true ? never : TObject extends ReadonlyArray<infer U> ? (ReturnedValueInPath<U, R> | undefined) : never : never : never
 
 
 /**

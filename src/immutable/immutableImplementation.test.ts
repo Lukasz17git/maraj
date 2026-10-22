@@ -37,6 +37,13 @@ describe("update test", () => {
       expect(update(objectExample, { "nonexistent": v => v })).toEqual({ ...objectExample, nonexistent: undefined })
    })
 
+   it('should create the object in the path if it is missing, null or undefined', () => {
+      expect(update({}, { "address.city": 'Madrid' })).toEqual({ address: { city: 'Madrid' } })
+      expect(update({ address: undefined }, { "address.city": 'Madrid' })).toEqual({ address: { city: 'Madrid' } })
+      expect(update({ manager: null }, { "manager.name": 'Ana' })).toEqual({ manager: { name: 'Ana' } })
+      expect(update({}, { "orders.0.id": 1 })).toEqual({ orders: [{ id: 1 }] })
+   })
+
    // it('should add new value/prop in array if the index/path doesnt exist beforehand', () => {
    //    expect(update(objectExample, { "data.arrayExample.100.name": 'any value' })).
    //    expect(update(objectExample, { "data.arrayExample.2": { name: 'new name' } })).
