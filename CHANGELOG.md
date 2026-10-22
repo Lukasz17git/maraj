@@ -1,5 +1,20 @@
 # maraj
 
+## 2.11.0
+
+### Minor Changes
+
+- e901509: changed strictValueWrapper into strictType, more readable
+- 86a0a05: paths through optional or nullable objects now work in update() and select() ('address.city' with address?: { city }, 'manager.name' with manager: { name } | null)
+
+### Patch Changes
+
+- 86a0a05: select() now returns undefined when an object in the path is null or undefined (was throwing)
+- 86a0a05: KeyOf and DotPaths no longer add undefined for optional props, and DotPaths<T, string> now includes optional strings (were left out)
+- 86a0a05: ObjectLiteral no longer matches Promise, WeakMap or ArrayBuffer; KeyOf, Strict and DotPaths now treat File and Blob as values (KeyOf<File> is never)
+- 86a0a05: fixed DotPaths failing as a circular type on TypeScript 5.4 and newer
+- 86a0a05: ValueInPath and ReturnedValueInPath now return never for a tuple position that doesn't exist ('point.5' on [number, number], was number)
+
 ## 2.10.0
 
 ### Minor Changes
