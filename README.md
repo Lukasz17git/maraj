@@ -1,211 +1,249 @@
-
 # Maraj
 
-A fast lightweight utility for creating **immutable updates**. Fully typed. Only 600 bytes gziped. Includes usefull utilities for manipulating updates (like remove, select).
+A small utility for **immutable updates** of objects and arrays with dot paths. Fully typed, about 1.2 KB gzipped. Includes helpers to work with updates (`remove`, `select`, `set`, ...).
 
 ### Features
 
-- Update and ExtendableUpdate.
-- Usefull utilities like "remove", "select".
-- Full typescript support.
-- Correct type inference.
-- Multiple and concurrent updates.
-- Nested functional updates.
+- `update` with typed dot paths (`'files.0.name'`), checked by TypeScript.
+- Several updates in one call, sharing the copies of common parents.
+- Function updates that get the current value.
+- Only the objects and arrays along each path are copied; everything else keeps its reference.
+- Options to add, skip or throw on missing props and indexes.
+- Helpers: `remove`, `select`, `set`, `splitPathAtLastKey` and a few type helpers.
 
-<u>**For Typescript:**</u> in tsconfig.json set **"strictNullChecks"** and **"noUncheckedIndexedAccess"** to **true** to be able to infer correctly the type of *optional properties* and *properties with posible undefined value*. ( { key?: ... } is not equal to { key: ... | undefined } )
+```sh
+npm install maraj
+```
 
 ```ts
-const originalValue = { name: 'one', lastname: 'two' modified: false, files: [{ filename: 'one' }] }
+import { update } from 'maraj'
 
-const updatedValue = update(orignalValue, {
+const original = { name: 'one', lastname: 'two', modified: false, files: [{ filename: 'one' }, { filename: 'two' }] }
+
+const updated = update(original, {
    'name': 'updated',
-   'modified': (value, fullObject) => !value,
+   'modified': (value) => !value,
    'files.0.filename': 'zero',
 })
-// updatedValue = { name: 'updated', lastname: 'two' modified: true, files: [{ filename: 'zero' }] }
-originalValue.files[1] === updatedValue.files[1] // true
-
-const newValue = extendableUpdate(orignalValue, {
-   'newProp': 'new',
-   'data.0.name': 'dataName'
-})
-// updatedValue = { ... , newProp: 'new', data: [{ name: 'dataName' }] }
-originalValue.files[1] === newValue.files[1] // true
+// updated = { name: 'updated', lastname: 'two', modified: true, files: [{ filename: 'zero' }, { filename: 'two' }] }
+original.files[1] === updated.files[1] // true, not copied
+original.files === updated.files // false, copied because 'files.0' changed
 ```
 
-### Limitations
+<u>**For TypeScript:**</u> set **"strictNullChecks"** and **"noUncheckedIndexedAccess"** to **true** in tsconfig.json, so optional props and props that can be `undefined` get the right type (`{ key?: string }` is not the same as `{ key: string | undefined }`). With **"exactOptionalPropertyTypes"** too, setting `undefined` on a prop that isn't optional is an error.
 
-- Can work with keys containing dots ({ "this.is.dotted.key": 123 }), however those keys (keys containing dots) must exist in the object beforehand (hasOwnProperty) and also must have a non-literal-object/array value to behave properly; like primitives, sets, maps, and so on. For example the path "a.b.c.d" will work properly in the following scenarios:
-  - { "a.b.c.d": ... }
-  - { a: { "b.c.d": ... } }
-  - { a: { b: {"c.d": ... } } }
-  - { a: { b: {"c": { d: ... } } } }
-
-  It can still work with dot-paths keys containing an object or array, however the paths targeting nested properties in this key are forbiden. For example having the following object { a: { "b.c": { d: ... } } } you can use the path "a" and "a.b.c", but you cant use "a.b.c.d", this path will create a new property "b" inside "a", then "c" and lastly "d" resulting in the following object { a: { "b.c": { d: ... } }, b: { c: { d: ... } } }
-
-- In "extendableUpdate", **numbers** inside path will **always** create a mutable **array** if the array/object doesnt exist beforehand. If you want an object/tuple/readonlyArray instead of an array, add it beforehand as type.
+## update
 
 ```ts
-const updatedValue = extendableUpdate({}, {
-   'files.1.name': 'new name',
-})
-// The "files" prop is an array. updatedValue = { files: [<empty>, { name: 'new name' }] }
-
-// To get an object instead of an array create an object beforehand
-const updatedValue2 = extendableUpdate({}, {
-   'files': {}, // add an object first, so then i can add props as numbers after it
-   'files.1.name': 'new name',
-})
-// updatedValue2 = { files: { '1': { name: 'new name' } } }
+update(state, updateObject, options?)
 ```
 
-- The type "UpdateObject" (the type of the object provided containing the updates, used as second parameter in the update function) if used to create new update objects using computed properties in a inline syntax { [key]: value } will always throw a ts error even if the typing is correct, use the second syntax.
+- `state`: an object literal or array, anything else throws (`Date`, `Map`, class instances, `null`).
+- `updateObject`: an object literal of `{ 'dot.path': newValue }`, applied in order.
+- `options`: what to do with paths that don't exist yet (see [Options](#options)).
+
+Returns a new object with the updates; `state` is never changed.
+
+- A **function** as value is called with the current value (`undefined` if the prop doesn't exist) and its result is set. To set a function as the value, use [`set`](#set).
+- Missing parents are created: an array when the next key is an index (`'files.1.name'` on `{}` -> `{ files: [<empty>, { name }] }`), an object otherwise.
+- A primitive or `null` in the middle of a path is replaced by a new object (`'a.b'` on `{ a: 1 }` -> `{ a: { b } }`).
+- Only own props are read: `'toString.value'` creates a `toString` prop instead of reading `Object.prototype.toString`.
+- A path with `'__proto__'` throws (it would change the prototype of the copy).
+- An empty path (`''`) is skipped, and so are symbol keys.
 
 ```ts
-const updateFieldStore = <T, TPath extends DotPaths<T>>(
-   state: T,
-   path: TPath,
-   newValue: UpdateValue<T, TPath>
-) => {
-   // ts error even if the typing is correct (typescript issue)
-   const updateObject1: UpdateObject<T> = {
-      [path]: newValue
-   }
-
-   // All good, no ts error
-   const updateObject2: UpdateObject<T> = {}
-   updateObject[path] = newValue
-   
-}
-```
-
-- Use the "set" utility if typescript doesn't infer properly *"an optional field"* vs a *"field which can have 'undefined' as type"*. Usually happens in nested props inside arrays.
-
-```ts
-const updatedValue = update(data, {
-   'files.0.nonOptionalProperty': 'new name',
-   'files.1.nonOptionalProperty': undefined, //no ts error
-   'files.0.nonOptionalProperty': set('new name'),
-   'files.1.nonOptionalProperty': set(undefined), //throws ts error, undefined cant be a value.
-})
-```
-
-## Creating a Strict Immutable Update
-
-Arguments:
-
-- Original Object
-- Update Object
-- Options (to change JS behaviour on non existing props and indexes)
-  - 'add': Adds non existing property/index.
-  - 'skip': Skips the update in the non-existing prop/index and still applies the rest of the possible updates.
-  - 'throw': Throws a JS error, usefull working with indexes making sure there are no "empty" indexes created if a new index is added which is bigger than the length of the current array.
-
-## Example
-
-```js
-import { update } from "maraj";
+import { update } from 'maraj'
 
 const data = {
-    profile: { name: "Lukasz" },
-    works: ["soum", "fi"],
-    history: [
-        { title: "soum", size: 90, available: true, info: ["info1"] },
-        { title: "fi", size: 30, available: false, info: ["infoA"] },
-    ]
+   profile: { name: 'Lukasz' },
+   works: ['soum', 'fi'],
+   history: [
+      { title: 'soum', size: 90, available: true },
+      { title: 'fi', size: 30, available: false },
+   ],
 }
 
-const newUpdatedObject = update(data, {
-    "profile.name": "Lucas", //update values
-    "works.1": "gs", //nested array update
-    "history.1.available": (currentValue) => (!currentValue), //functional update
-    "works": (v) => [...v, 'portfolio'] //add new value to array
+const newData = update(data, {
+   'profile.name': 'Lucas',
+   'works.1': 'gs',
+   'history.1.available': (available) => !available,
+   'works': (works) => [...works, 'portfolio'], // runs after 'works.1', so it gets ['soum', 'gs']
 })
 ```
 
-## Creating an Immutable Update allowing new props to be added
+TypeScript only accepts paths that exist in the type of `state`, with values of the same type. Use [`experimental_extendableUpdate`](#experimental_extendableupdate) to add new props.
 
-Arguments:
+### Options
 
-- Original Object
-- Update Object
+Each option takes `'add'` (default), `'skip'` or `'error'`:
 
-## Example
+- `onNewProps`: a prop doesn't exist, in an object, or a string key in an array.
+- `onNewIndexes`: an index doesn't exist in an array (`'works.5'` on a 2-item array). `'error'` makes sure no empty items are created.
+- `onPathsIntersectedByPrimitiveValues`: a primitive or `null` is in the middle of the path (`'a.b'` on `{ a: 1 }`). `'add'` replaces it with an object.
 
-```js
-import { extendableUpdate } from "maraj";
+`'skip'` skips only that path, at any depth, and still applies the rest. `'error'` throws an `Error` naming the key and the path.
 
-const data = {
-    profile: { name: "Lukasz" },
-    works: ["soum", "fi"],
-    history: [
-        { title: "soum", size: 90, available: true, info: ["info1"] },
-        { title: "fi", size: 30, available: false, info: ["infoA"] },
-    ]
-}
+```ts
+update({ a: { d: 1 } }, { 'a.b.c': 1, 'a.d': 2 }, { onNewProps: 'skip' })
+// { a: { d: 2 } }
 
-const newUpdatedObject = extendableUpdate(data, {
-    "profile.age": 28, //add new property
-    "profile.name": "Lucas", //update values
-    "works.10": "gs", //increases the array (filling it up with empty/undefined) and sets the value in the index of 10 to "gs"
+update({ list: [1, 2] }, { 'list.5': 3 }, { onNewIndexes: 'error' })
+// throws: Property/Index "5" doesnt exist in the path "list.5"...
+```
+
+## experimental_extendableUpdate
+
+Same as `update`, but TypeScript also accepts new paths and the returned type includes them. It has no options: new props and indexes are always added.
+
+```ts
+import { experimental_extendableUpdate } from 'maraj'
+
+const newData = experimental_extendableUpdate(data, {
+   'profile.age': 28, // new prop
+   'profile.name': 'Lucas',
+   'works.10': 'gs', // new index, items 2 to 9 are left empty
 })
 ```
 
-## Remove Utility
+A number in the path creates a mutable array when nothing exists there yet. To get an object instead, set it first:
 
-Removes the **key of an object** or the **index of an array** in the key provided in the **update.**
+```ts
+experimental_extendableUpdate({}, { 'files.1.name': 'new name' })
+// { files: [<empty>, { name: 'new name' }] }
 
-```js
-import {remove} from 'maraj'
+experimental_extendableUpdate({}, {
+   'files': {},
+   'files.1.name': 'new name',
+})
+// { files: { '1': { name: 'new name' } } }
+```
 
-const newUpdatedObject = update(person,{
-    'profile': (value) => remove(value, 'name'), // returns new value without the "name" prop
-    'profile': (value) => remove(value, ['name', 'lastname']), // returns new value without the "name" and "lastname" prop
-    'works': (value) => remove(value, 1), // returns new array without the provided index (1)
-    'works': (value) => remove(value, [1, "0"]), // returns new array without the provided index "0" and "1"
+## set
+
+Returns a function update that always returns the given value. Use it to:
+
+- Set a function as a value (a plain function would be called as an update).
+- Get a stricter type when TypeScript mixes up an optional prop with one that can be `undefined` (usually props of items inside arrays): `set(undefined)` is an error.
+
+```ts
+import { update, set } from 'maraj'
+
+const button = { label: 'Save', onClick: () => {}, files: [{ name: 'one' }] }
+
+update(button, {
+   'onClick': set(() => console.log('clicked')),
+   'files.0.name': set('new name'),
 })
 ```
 
-## Select Utility
+## remove
 
-Selects the value of an object/array from a string-dot-path. Usefull in state management libraries.
+Returns a copy of an object without the given keys, or of an array without the given indexes. Use it inside a function update.
 
-```js
-import {select} from 'maraj'
+- Objects: only optional keys can be removed (TypeScript).
+- Arrays: indexes as numbers or strings (`1`, `'1'`), in any order; repeated or out-of-range indexes are ignored.
+- Anything other than an object literal or array throws.
 
-const stringPath = 'works.1.size'
+```ts
+import { update, remove } from 'maraj'
 
-const work1SizeSelector = (state) => select(state, stringPath) // will behave as (store) => store[works][1][size]
+type Person = { profile: { name: string, nickname?: string }, works: string[] }
+const person: Person = { profile: { name: 'Lukasz', nickname: 'Luk' }, works: ['soum', 'fi', 'gs'] }
+
+update(person, {
+   'profile': (profile) => remove(profile, 'nickname'), // removes "nickname"
+   'works': (works) => remove(works, [1, '0']), // ['gs']
+})
 ```
 
-## SplitPathAtLastKey Utility
+## select
 
-Usefull when you want to retrieve the last key (for example an id).
+Returns the value in a dot path, or `undefined` if the path doesn't exist. `''` returns the whole state.
 
-Splits string path (example:'projects.1.data.size' ) into two:
+- Only own props are read: `'profile.toString'` and `'tags.map'` give `undefined`, and so does `'size'` on a `Map`.
+- `null` or `undefined` in the middle of the path gives `undefined`.
+- A key with dots (`{ 'a.b': 1 }`) is found when it matches the whole rest of the path.
 
-- remainingPath: the remaining path (in this case 'projects.1.data')
-- lastKey: the last key in the path (in this case 'size')
+```ts
+import { select } from 'maraj'
 
-```js
+const work1SizeSelector = (state) => select(state, 'history.1.size') // state.history[1].size
+```
+
+## splitPathAtLastKey
+
+Splits a dot path into the path before the last key and the last key (for example, to get an id).
+
+```ts
 import { splitPathAtLastKey } from 'maraj'
 
-const stringPath = 'works.1.size'
+const [remainingPath, lastKey] = splitPathAtLastKey('projects.1.data.size')
+// remainingPath = 'projects.1.data', lastKey = 'size'
 
-const [remainingPath, lastKey] = splitPathAtLastKey(stringPath)
-// lastKey = 'size'
-// remainingPath = 'works.1'
+splitPathAtLastKey('size') // ['', 'size']
 ```
 
-## Set Utility
+## Type helpers
 
-In some unusual cases (usually when updating an optional object prop inside an array) typescript infers incorrectly the optional key vs a key with undefined value. To fix this typing issue, use the "set" function so it correctly infers the type in the field.
+- `strictType<T, U>(value)`: returns `value` as `U`, and TypeScript errors when `value` has props `U` doesn't have (plain assignment allows them).
+- `strict(value)` (or `s`): returns `value` unchanged, typed as `Strict<T>`.
+- `isObjectLiteral(value)`: `true` when the prototype is `Object.prototype` (`{}`, `{ a: 1 }`); `false` for arrays, `null`, `Object.create(null)`, `Date`, `Map`, class instances and objects from another realm (`node:vm`, iframes).
+- `isStringIndex(key)`: `true` when `key` is an integer written as `parseInt` would write it (`'1'`); `false` for `'01'`, `'1.5'`, `''` and `'NaN'`. `parseStringIndex(key)` returns that number, or `null`.
+- `forEachEntry(object, (key, value) => ...)`: `Object.keys(object).forEach` with typed keys and values.
 
 ```ts
-const updatedValue = update(data, {
-   'files.0.optionalProperty': 'new name',
-   'files.1.optionalProperty': undefined, //no ts error
-   'files.0.optionalProperty': set('new name'),
-   'files.1.optionalProperty': set(undefined), //throws ts error, undefined cant be a value.
-})
+import { strictType } from 'maraj'
+
+type User = { name: string, age?: number }
+const saveUser = (user: User) => { /* ... */ }
+
+const user = { name: 'Ana', admin: true }
+saveUser(user) // no error
+saveUser(strictType<typeof user, User>(user)) // error: "admin" isn't in User
 ```
+
+## Limitations
+
+- **Keys with dots** (`{ 'this.is.dotted.key': 123 }`) work only when they already exist and the path ends on them. The path `'a.b.c.d'` works on:
+  - `{ 'a.b.c.d': ... }`
+  - `{ a: { 'b.c.d': ... } }`
+  - `{ a: { b: { 'c.d': ... } } }`
+  - `{ a: { b: { c: { d: ... } } } }`
+
+  Paths into the value of a dotted key don't: with `{ a: { 'b.c': { d: 1 } } }`, `'a.b.c'` works but `'a.b.c.d'` creates `a.b.c.d` next to `'b.c'`: `{ a: { 'b.c': { d: 1 }, b: { c: { d: ... } } } }`.
+
+- **`UpdateObject` with a computed key** in an object literal is a TypeScript error even when the types are right. Assign the key after creating the object:
+
+```ts
+import type { DotPaths, UpdateObject, UpdateValue } from 'maraj'
+
+const updateField = <T, TPath extends DotPaths<T>>(state: T, path: TPath, newValue: UpdateValue<T, TPath>) => {
+   // ts error, even if the typing is correct (TypeScript issue)
+   const updateObject1: UpdateObject<T> = { [path]: newValue }
+
+   // no ts error
+   const updateObject2: UpdateObject<T> = {}
+   updateObject2[path] = newValue
+   return update(state, updateObject2)
+}
+```
+
+## Benchmarks
+
+<!-- bench:start -->
+Median speed against maraj in 11 scenarios (higher is faster)
+
+```text
+dot-prop-immutable     ██████████████████████████████  1.90x
+timm                   ███████████████████             1.21x
+maraj                  ████████████████                1.00x
+object-path-immutable  ███████████████                 0.96x
+immer (no autofreeze)  ███████████                     0.67x
+immutability-helper    █████████                       0.60x
+mutative               ████████                        0.53x
+immer                  ███████                         0.46x
+lodash/fp              ███████                         0.46x
+```
+<!-- bench:end -->
+
+`1.50x` means 1.5 times as many updates per second as maraj. The scenarios go from one top-level prop to 100 paths in a 1,000-item array: see [benchmarks/README.md](benchmarks/README.md) for each one, the machine and how to run them.
