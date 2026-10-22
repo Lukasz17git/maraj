@@ -1,5 +1,18 @@
 # maraj
 
+## 3.0.0
+
+### Major Changes
+
+- 1fc1431: update() reads only own props: 'toString.value' and 'constructor.prototype.x' create those props (were read from Object.prototype, and 'constructor.prototype' paths could change it for the whole app)
+- 1fc1431: update() throws on paths with '__proto__' (was changing the prototype of the copy)
+
+### Patch Changes
+
+- 2358030: update() is faster on nested paths (1.5x to 2x at depth 3 and more, same results): each level slices the path instead of joining its keys again, and one-path updates skip the tracker of copied paths
+- 1fc1431: isStringIndex('NaN') returns false and parseStringIndex('NaN') returns null (were true and NaN)
+- 1fc1431: 'skip' in onNewProps, onNewIndexes and onPathsIntersectedByPrimitiveValues skips only that path, at any depth (looped forever when the new prop, index or primitive was in the middle of the path)
+
 ## 2.11.0
 
 ### Minor Changes
